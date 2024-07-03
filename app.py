@@ -40,13 +40,30 @@ def main():
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
+        # Inputs section
+        st.header("Input Data")
+        col1, col2 = st.columns(2)
+        num_weeks = col1.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_channels = col2.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
+
+        # Create an empty dataframe to hold the spends
+        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
+
+        # Grid layout for inputs
+        st.write(" ")
+        columns = st.columns([1] * num_channels)
+        for j, channel in enumerate(channels[:num_channels]):
+            columns[j].write(channel)
+
+        for week in range(num_weeks):
+            for j, channel in enumerate(channels[:num_channels]):
+                spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+
         # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
 
         if st.button("Calculate"):
-            spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
-
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
@@ -66,21 +83,6 @@ def main():
             fig.update_layout(barmode='stack', xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]})
 
         st.plotly_chart(fig, use_container_width=True)
-
-        # Inputs section
-        st.header("Input Data")
-        col1, col2 = st.columns(2)
-        num_weeks = col1.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
-        num_channels = col2.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
-
-        # Grid layout for inputs
-        columns = st.columns([1] * num_channels)
-        for j, channel in enumerate(channels[:num_channels]):
-            columns[j].write(channel)
-
-        for week in range(num_weeks):
-            for j, channel in enumerate(channels[:num_channels]):
-                spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
 
         # Clear inputs button
         if st.button("Clear"):
