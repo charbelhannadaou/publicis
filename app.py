@@ -46,25 +46,22 @@ def main():
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         num_channels = st.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
 
-        # Create an empty dataframe to hold the spends
-        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
-
-        # Grid layout for inputs
-        columns = st.columns([1] + [4] * num_channels)
-        columns[0].write("Weeks")
-        for j, channel in enumerate(channels[:num_channels]):
-            columns[j + 1].write(channel)
-
-        for week in range(num_weeks):
-            columns[0].write(f"Week {week+1}")
-            for j, channel in enumerate(channels[:num_channels]):
-                spends_df.at[f"Week {week+1}", channel] = columns[j + 1].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
-
         # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
 
         if st.button("Calculate"):
+            spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
+            
+            # Grid layout for inputs
+            columns = st.columns([1] * num_channels)
+            for j, channel in enumerate(channels[:num_channels]):
+                columns[j].write(channel)
+
+            for week in range(num_weeks):
+                for j, channel in enumerate(channels[:num_channels]):
+                    spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
@@ -87,25 +84,18 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            for channel in channels[:num_channels]:
-                for week in range(num_weeks):
+            for week in range(num_weeks):
+                for j, channel in enumerate(channels[:num_channels]):
                     st.session_state[f"{channel}_week_{week}"] = 0.0
 
-        # Show total on bar click
-        @st.cache(allow_output_mutation=True)
-        def get_click_data():
-            return {}
+        # Grid layout for inputs (updated to remove redundant week labels)
+        columns = st.columns([1] * num_channels)
+        for j, channel in enumerate(channels[:num_channels]):
+            columns[j].write(channel)
 
-        click_data = get_click_data()
-
-        def on_click(trace, points, state):
-            week_idx = points.point_inds[0]
-            week = f"Week {week_idx + 1}"
-            total = sum([results[channel][week_idx] for channel in results.keys()])
-            click_data[week] = total
-            st.write(f"Total for {week}: {total}")
-
-        fig.data[-1].on_click(on_click)
+        for week in range(num_weeks):
+            for j, channel in enumerate(channels[:num_channels]):
+                st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
 
 # Run the app
 if __name__ == "__main__":
