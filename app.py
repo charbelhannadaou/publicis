@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Function to load coefficients from an Excel file
 def load_coefficients(file):
@@ -31,59 +32,56 @@ def main():
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
     uploaded_file = st.sidebar.file_uploader("Upload Coefficients Excel", type=["xlsx"])
+    
     if uploaded_file:
         coeffs_df = load_coefficients(uploaded_file)
-        st.sidebar.write("Coefficients Data:")
-        st.sidebar.dataframe(coeffs_df)
-    
-    # Check if coefficients data is loaded
-    if uploaded_file:
         channels = coeffs_df['channel'].tolist()
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
         gammas = coeffs_df.set_index('channel')['gamma'].to_dict()
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
-        # Inputs table
+        # Prepare inputs section
         st.header("Input Data")
+
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         num_channels = st.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
 
-        spends = {}
-        for i in range(num_channels):
-            channel = st.selectbox(f"Select Channel {i+1}", options=channels, key=f"channel_{i}")
-            spends[channel] = []
+        # Create an empty dataframe to hold the spends
+        spends_df = pd.DataFrame(index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
+        
+        for channel in channels[:num_channels]:
             for week in range(num_weeks):
-                spend = st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
-                spends[channel].append(spend)
+                spends_df.loc[f"Week {week+1}", channel] = st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
 
-        # Calculate button
+        # Show spends dataframe as input table
+        st.dataframe(spends_df)
+
+        # Display the visualization area
+        st.header("Results")
+        fig = go.Figure()
+
         if st.button("Calculate"):
-            st.header("Results")
             results = {}
-            for channel, spend in spends.items():
+            for channel in spends_df.columns:
+                spend = spends_df[channel].values.astype(float)
                 adstocked = adstock_transform(spend, thetas[channel])
                 saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
                 response = response_transform(saturated, betas[channel])
                 results[channel] = response
-
-            # Plotting results
-            fig, ax = plt.subplots()
-            width = 0.35
-            indices = np.arange(num_weeks)
-            for i, (channel, response) in enumerate(results.items()):
-                ax.bar(indices + i * width, response, width, label=channel)
             
-            ax.set_xlabel('Weeks')
-            ax.set_ylabel('Response')
-            ax.set_title('Responses by Channel and Week')
-            ax.set_xticks(indices + width / 2)
-            ax.set_xticklabels([f"Week {i+1}" for i in range(num_weeks)])
-            ax.legend()
+            # Create a stacked bar chart
+            for channel, response in results.items():
+                fig.add_trace(go.Bar(
+                    x=[f"Week {i+1}" for i in range(num_weeks)],
+                    y=response,
+                    name=channel
+                ))
 
-            st.pyplot(fig)
+            fig.update_layout(barmode='stack', xaxis={'categoryorder':'category ascending'})
+        
+        st.plotly_chart(fig, use_container_width=True)
 
-        # Clear button
         if st.button("Clear"):
             st.experimental_rerun()
 
