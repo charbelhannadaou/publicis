@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 
 # Function to load coefficients from an Excel file
@@ -49,11 +48,17 @@ def main():
 
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
-        
-        # Interactive input table
-        for channel in channels[:num_channels]:
-            for week in range(num_weeks):
-                spends_df.at[f"Week {week+1}", channel] = st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+
+        # Grid layout for inputs
+        columns = st.columns([1] + [4] * num_channels)
+        columns[0].write("Weeks")
+        for j, channel in enumerate(channels[:num_channels]):
+            columns[j + 1].write(channel)
+
+        for week in range(num_weeks):
+            columns[0].write(f"Week {week+1}")
+            for j, channel in enumerate(channels[:num_channels]):
+                spends_df.at[f"Week {week+1}", channel] = columns[j + 1].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
 
         # Display the visualization area at the top
         st.header("Results")
@@ -79,10 +84,6 @@ def main():
             fig.update_layout(barmode='stack', xaxis={'categoryorder':'array', 'categoryarray':[f"Week {i+1}" for i in range(num_weeks)]})
         
         st.plotly_chart(fig, use_container_width=True)
-
-        # Show input table below the graph
-        st.write("Input Table")
-        st.dataframe(spends_df)
 
         # Clear inputs button
         if st.button("Clear"):
