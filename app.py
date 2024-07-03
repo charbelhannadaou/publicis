@@ -48,16 +48,14 @@ def main():
         num_channels = st.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
 
         # Create an empty dataframe to hold the spends
-        spends_df = pd.DataFrame(index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
+        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
         
+        # Interactive input table
         for channel in channels[:num_channels]:
             for week in range(num_weeks):
-                spends_df.loc[f"Week {week+1}", channel] = st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+                spends_df.at[f"Week {week+1}", channel] = st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
 
-        # Show spends dataframe as input table
-        st.dataframe(spends_df)
-
-        # Display the visualization area
+        # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
 
@@ -78,12 +76,35 @@ def main():
                     name=channel
                 ))
 
-            fig.update_layout(barmode='stack', xaxis={'categoryorder':'category ascending'})
+            fig.update_layout(barmode='stack', xaxis={'categoryorder':'array', 'categoryarray':[f"Week {i+1}" for i in range(num_weeks)]})
         
         st.plotly_chart(fig, use_container_width=True)
 
+        # Show input table below the graph
+        st.write("Input Table")
+        st.dataframe(spends_df)
+
+        # Clear inputs button
         if st.button("Clear"):
-            st.experimental_rerun()
+            for channel in channels[:num_channels]:
+                for week in range(num_weeks):
+                    st.session_state[f"{channel}_week_{week}"] = 0.0
+
+        # Show total on bar click
+        @st.cache(allow_output_mutation=True)
+        def get_click_data():
+            return {}
+
+        click_data = get_click_data()
+
+        def on_click(trace, points, state):
+            week_idx = points.point_inds[0]
+            week = f"Week {week_idx + 1}"
+            total = sum([results[channel][week_idx] for channel in results.keys()])
+            click_data[week] = total
+            st.write(f"Total for {week}: {total}")
+
+        fig.data[-1].on_click(on_click)
 
 # Run the app
 if __name__ == "__main__":
