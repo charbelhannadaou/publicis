@@ -50,17 +50,17 @@ def main():
         # Grid layout for inputs
         st.write(" ")
         columns = st.columns(len(channels))
-        inputs = []
+        inputs = {}
         for j, channel in enumerate(channels):
             columns[j].write(channel)
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
                 if key not in st.session_state:
                     st.session_state[key] = 0.0
-                input_field = columns[j].number_input(
+                inputs[key] = columns[j].number_input(
                     f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=key
                 )
-                inputs.append(input_field)
+                spends_df.at[f"Week {week+1}", channel] = inputs[key]
 
         # Display the visualization area at the top
         st.header("Results")
@@ -89,7 +89,7 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            for key in st.session_state.keys():
+            for key in inputs.keys():
                 st.session_state[key] = 0.0
             st.experimental_rerun()
 
