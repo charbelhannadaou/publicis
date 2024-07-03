@@ -87,7 +87,7 @@ def main():
         # Buttons for Calculate and Clear
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Calculate", key="calculate"):
+            if st.button("Calculate", key="calculate_2"):
                 pass  # Calculations are already performed above
 
         with col2:
