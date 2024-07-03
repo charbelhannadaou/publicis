@@ -50,17 +50,17 @@ def main():
         # Grid layout for inputs
         st.write(" ")
         columns = st.columns(len(channels))
+        inputs = []
         for j, channel in enumerate(channels):
             columns[j].write(channel)
-
-        for week in range(num_weeks):
-            for j, channel in enumerate(channels):
+            for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
                 if key not in st.session_state:
                     st.session_state[key] = 0.0
-                spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(
+                input_field = columns[j].number_input(
                     f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=key
                 )
+                inputs.append(input_field)
 
         # Display the visualization area at the top
         st.header("Results")
@@ -87,19 +87,11 @@ def main():
 
         st.plotly_chart(fig, use_container_width=True)
 
-        # Buttons for Calculate and Clear
-        col1, col2 = st.columns(2)
-        with col1:
-            pass  # Removed the redundant "Calculate Again" button
-
-        with col2:
-            if st.button("Clear"):
-                for week in range(num_weeks):
-                    for j, channel in enumerate(channels):
-                        key = f"{channel}_week_{week}"
-                        st.session_state[key] = 0.0
-                # Refresh the page to reset the input values
-                st.experimental_rerun()
+        # Clear inputs button
+        if st.button("Clear"):
+            for key in st.session_state.keys():
+                st.session_state[key] = 0.0
+            st.experimental_rerun()
 
 # Run the app
 if __name__ == "__main__":
