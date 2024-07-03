@@ -31,7 +31,7 @@ def main():
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
     uploaded_file = st.sidebar.file_uploader("Upload Coefficients Excel", type=["xlsx"])
-    
+
     if uploaded_file:
         coeffs_df = load_coefficients(uploaded_file)
         channels = coeffs_df['channel'].tolist()
@@ -40,27 +40,12 @@ def main():
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
-        # Prepare inputs section
-        st.header("Input Data")
-
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
-        num_channels = st.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
-
         # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
 
         if st.button("Calculate"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
-            
-            # Grid layout for inputs
-            columns = st.columns([1] * num_channels)
-            for j, channel in enumerate(channels[:num_channels]):
-                columns[j].write(channel)
-
-            for week in range(num_weeks):
-                for j, channel in enumerate(channels[:num_channels]):
-                    spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
 
             results = {}
             for channel in spends_df.columns:
@@ -69,7 +54,7 @@ def main():
                 saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
                 response = response_transform(saturated, betas[channel])
                 results[channel] = response
-            
+
             # Create a stacked bar chart
             for channel, response in results.items():
                 fig.add_trace(go.Bar(
@@ -78,24 +63,30 @@ def main():
                     name=channel
                 ))
 
-            fig.update_layout(barmode='stack', xaxis={'categoryorder':'array', 'categoryarray':[f"Week {i+1}" for i in range(num_weeks)]})
-        
+            fig.update_layout(barmode='stack', xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]})
+
         st.plotly_chart(fig, use_container_width=True)
 
-        # Clear inputs button
-        if st.button("Clear"):
-            for week in range(num_weeks):
-                for j, channel in enumerate(channels[:num_channels]):
-                    st.session_state[f"{channel}_week_{week}"] = 0.0
+        # Inputs section
+        st.header("Input Data")
+        col1, col2 = st.columns(2)
+        num_weeks = col1.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_channels = col2.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
 
-        # Grid layout for inputs (updated to remove redundant week labels)
+        # Grid layout for inputs
         columns = st.columns([1] * num_channels)
         for j, channel in enumerate(channels[:num_channels]):
             columns[j].write(channel)
 
         for week in range(num_weeks):
             for j, channel in enumerate(channels[:num_channels]):
-                st.number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+                spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+
+        # Clear inputs button
+        if st.button("Clear"):
+            for week in range(num_weeks):
+                for j, channel in enumerate(channels[:num_channels]):
+                    st.session_state[f"{channel}_week_{week}"] = 0.0
 
 # Run the app
 if __name__ == "__main__":
