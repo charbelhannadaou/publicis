@@ -55,15 +55,18 @@ def main():
 
         for week in range(num_weeks):
             for j, channel in enumerate(channels):
+                key = f"{channel}_week_{week}"
+                if key not in st.session_state:
+                    st.session_state[key] = 0.0
                 spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(
-                    f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}"
+                    f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=key
                 )
 
         # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
 
-        if st.button("Calculate", key="calculate"):
+        if st.button("Calculate"):
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
@@ -87,15 +90,14 @@ def main():
         # Buttons for Calculate and Clear
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Calculate Again", key="calculate_again"):
+            if st.button("Calculate Again"):
                 pass  # Redundant calculation button placeholder
 
         with col2:
-            if st.button("Clear", key="clear"):
+            if st.button("Clear"):
                 for week in range(num_weeks):
                     for j, channel in enumerate(channels):
                         st.session_state[f"{channel}_week_{week}"] = 0.0
-                # Refresh the page to reset the input values
                 st.experimental_rerun()
 
 # Run the app
