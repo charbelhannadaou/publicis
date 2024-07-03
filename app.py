@@ -85,7 +85,7 @@ def main():
         st.plotly_chart(fig, use_container_width=True)
 
         # Buttons for Calculate and Clear
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns(2)
         with col1:
             if st.button("Calculate Again", key="calculate_again"):
                 pass  # Redundant calculation button placeholder
