@@ -90,14 +90,15 @@ def main():
         # Buttons for Calculate and Clear
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Calculate Again"):
-                pass  # Redundant calculation button placeholder
+            pass  # Removed the redundant "Calculate Again" button
 
         with col2:
             if st.button("Clear"):
                 for week in range(num_weeks):
                     for j, channel in enumerate(channels):
-                        st.session_state[f"{channel}_week_{week}"] = 0.0
+                        key = f"{channel}_week_{week}"
+                        st.session_state[key] = 0.0
+                # Refresh the page to reset the input values
                 st.experimental_rerun()
 
 # Run the app
