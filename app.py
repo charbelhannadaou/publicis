@@ -85,16 +85,18 @@ def main():
         st.plotly_chart(fig, use_container_width=True)
 
         # Buttons for Calculate and Clear
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button("Calculate", key="calculate_2"):
-                pass  # Calculations are already performed above
+            if st.button("Calculate Again", key="calculate_again"):
+                pass  # Redundant calculation button placeholder
 
         with col2:
             if st.button("Clear", key="clear"):
                 for week in range(num_weeks):
                     for j, channel in enumerate(channels):
                         st.session_state[f"{channel}_week_{week}"] = 0.0
+                # Refresh the page to reset the input values
+                st.experimental_rerun()
 
 # Run the app
 if __name__ == "__main__":
