@@ -42,28 +42,28 @@ def main():
 
         # Inputs section
         st.header("Input Data")
-        col1, col2 = st.columns(2)
-        num_weeks = col1.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
-        num_channels = col2.number_input("Number of Channels", min_value=1, max_value=len(channels), value=1)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
 
         # Create an empty dataframe to hold the spends
-        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels[:num_channels])
+        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
         # Grid layout for inputs
         st.write(" ")
-        columns = st.columns([1] * num_channels)
-        for j, channel in enumerate(channels[:num_channels]):
+        columns = st.columns(len(channels))
+        for j, channel in enumerate(channels):
             columns[j].write(channel)
 
         for week in range(num_weeks):
-            for j, channel in enumerate(channels[:num_channels]):
-                spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}")
+            for j, channel in enumerate(channels):
+                spends_df.at[f"Week {week+1}", channel] = columns[j].number_input(
+                    f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=f"{channel}_week_{week}"
+                )
 
         # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
 
-        if st.button("Calculate"):
+        if st.button("Calculate", key="calculate"):
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
@@ -84,17 +84,11 @@ def main():
 
         st.plotly_chart(fig, use_container_width=True)
 
-        # Buttons for Calculate and Clear
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Calculate"):
-                pass  # Calculations are already performed above
-
-        with col2:
-            if st.button("Clear"):
-                for week in range(num_weeks):
-                    for j, channel in enumerate(channels[:num_channels]):
-                        st.session_state[f"{channel}_week_{week}"] = 0.0
+        # Clear inputs button
+        if st.button("Clear", key="clear"):
+            for week in range(num_weeks):
+                for j, channel in enumerate(channels):
+                    st.session_state[f"{channel}_week_{week}"] = 0.0
 
 # Run the app
 if __name__ == "__main__":
