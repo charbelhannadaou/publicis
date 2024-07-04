@@ -56,11 +56,12 @@ def main():
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
                 if key not in st.session_state:
-                    st.session_state[key] = 0.0
-                inputs[key] = columns[j].number_input(
-                    f"{channel} - Week {week+1}", min_value=0.0, step=1.0, key=key
+                    st.session_state[key] = '0'
+                input_value = columns[j].text_input(
+                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
                 )
-                spends_df.at[f"Week {week+1}", channel] = inputs[key]
+                inputs[key] = input_value
+                spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
         # Display the visualization area at the top
         st.header("Results")
@@ -90,7 +91,7 @@ def main():
         # Clear inputs button
         if st.button("Clear"):
             for key in inputs.keys():
-                st.session_state[key] = 0.0
+                st.session_state[key] = '0'
             st.experimental_rerun()
 
 # Run the app
