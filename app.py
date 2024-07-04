@@ -66,7 +66,7 @@ def main():
         # Display the visualization area at the top
         st.header("Results")
         fig = go.Figure()
-        results_df = None
+        results_df = pd.DataFrame()
 
         if st.button("Calculate"):
             results = {}
@@ -97,6 +97,8 @@ def main():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results)
             results_df['Total'] = results_df.sum(axis=1)
+
+        if not results_df.empty:
             st.dataframe(results_df)
 
         # Clear inputs button
@@ -104,9 +106,6 @@ def main():
             for key in inputs.keys():
                 st.session_state[key] = '0'
             st.experimental_rerun()
-
-        if results_df is not None:
-            st.dataframe(results_df)
 
 # Run the app
 if __name__ == "__main__":
