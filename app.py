@@ -99,7 +99,7 @@ def main():
             results_df['Total'] = results_df.sum(axis=1)
 
         if not results_df.empty:
-            st.write(results_df)
+            st.dataframe(results_df.style.format("{:.0f}").set_properties(**{'text-align': 'center'}))
 
         # Clear inputs button
         if st.button("Clear"):
