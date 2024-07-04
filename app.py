@@ -81,13 +81,14 @@ def main():
                 fig.add_trace(go.Bar(
                     x=[f"Week {i+1}" for i in range(num_weeks)],
                     y=response,
-                    name=channel
+                    name=channel,
+                    hovertemplate='%{y:.0f}'  # Display full numbers in the tooltip
                 ))
 
             fig.update_layout(
                 barmode='stack',
                 xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
-                yaxis=dict(tickformat="")  # This ensures the y-axis shows full numbers without "k"
+                yaxis=dict(tickformat="")  # Ensure y-axis shows full numbers
             )
 
         st.plotly_chart(fig, use_container_width=True)
