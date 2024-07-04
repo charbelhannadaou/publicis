@@ -84,7 +84,11 @@ def main():
                     name=channel
                 ))
 
-            fig.update_layout(barmode='stack', xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]})
+            fig.update_layout(
+                barmode='stack',
+                xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
+                yaxis=dict(tickformat="")  # This ensures the y-axis shows full numbers without "k"
+            )
 
         st.plotly_chart(fig, use_container_width=True)
 
