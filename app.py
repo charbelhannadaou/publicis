@@ -99,7 +99,7 @@ def main():
             results_df['Total'] = results_df.sum(axis=1)
 
         if not results_df.empty:
-            st.dataframe(results_df)
+            st.write(results_df)
 
         # Clear inputs button
         if st.button("Clear"):
