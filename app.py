@@ -82,16 +82,22 @@ def main():
                     x=[f"Week {i+1}" for i in range(num_weeks)],
                     y=response,
                     name=channel,
-                    hovertemplate='%{y:.0f}'  # Display full numbers in the tooltip
+                    hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
                 ))
 
             fig.update_layout(
                 barmode='stack',
                 xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
-                yaxis=dict(tickformat="")  # Ensure y-axis shows full numbers
+                yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
         st.plotly_chart(fig, use_container_width=True)
+
+        # Display the results in a tabular format
+        if st.button("Show Results Table"):
+            results_df = pd.DataFrame(results)
+            results_df['Total'] = results_df.sum(axis=1)
+            st.dataframe(results_df)
 
         # Clear inputs button
         if st.button("Clear"):
