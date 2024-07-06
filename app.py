@@ -47,6 +47,13 @@ def main():
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
+        # Initialize session state for input values if not already initialized
+        if "inputs_initialized" not in st.session_state:
+            for channel in channels:
+                for week in range(num_weeks):
+                    st.session_state[f"{channel}_week_{week}"] = "0"
+            st.session_state["inputs_initialized"] = True
+
         # Grid layout for inputs
         st.write(" ")
         columns = st.columns(len(channels))
@@ -55,8 +62,6 @@ def main():
             columns[j].write(channel)
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
-                if key not in st.session_state:
-                    st.session_state[key] = "0"
                 input_value = columns[j].text_input(
                     f"{channel} - Week {week+1}", value=st.session_state[key], key=key
                 )
@@ -113,8 +118,7 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            # Execute JavaScript to reload the page
-            st.write('<script>location.reload()</script>', unsafe_allow_html=True)
+            st.write('<script>window.location.reload()</script>', unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
