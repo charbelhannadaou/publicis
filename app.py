@@ -113,7 +113,8 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            st.experimental_rerun()
+            # Execute JavaScript to reload the page
+            st.write('<script>location.reload()</script>', unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
