@@ -24,11 +24,6 @@ def saturation_transform(adstocked, alpha, gamma):
 def response_transform(saturated, coeff):
     return coeff * saturated
 
-# Function to clear the input fields
-def clear_inputs(keys):
-    for key in keys:
-        st.session_state[key] = ""
-
 # Main function
 def main():
     st.title("Marketing Mix Model")
@@ -52,19 +47,24 @@ def main():
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
+        # Initialize session state for input values if not already initialized
+        if "inputs_initialized" not in st.session_state:
+            for channel in channels:
+                for week in range(num_weeks):
+                    st.session_state[f"{channel}_week_{week}"] = "0"
+            st.session_state["inputs_initialized"] = True
+
         # Grid layout for inputs
         st.write(" ")
         columns = st.columns(len(channels))
-        inputs = {}
         for j, channel in enumerate(channels):
             columns[j].write(channel)
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
-                input_value = columns[j].text_input(
-                    f"{channel} - Week {week+1}", value=st.session_state.get(key, "0"), key=key
+                st.session_state[key] = columns[j].text_input(
+                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
                 )
-                inputs[key] = input_value
-                spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+                spends_df.at[f"Week {week+1}", channel] = float(st.session_state[key]) if st.session_state[key] else 0.0
 
         # Display the visualization area at the top
         st.header("Results")
@@ -116,7 +116,9 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            clear_inputs(inputs.keys())
+            for channel in channels:
+                for week in range(num_weeks):
+                    st.session_state[f"{channel}_week_{week}"] = "0"
             st.experimental_rerun()
 
 # Run the app
