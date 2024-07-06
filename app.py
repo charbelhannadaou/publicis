@@ -55,10 +55,8 @@ def main():
             columns[j].write(channel)
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
-                if key not in st.session_state:
-                    st.session_state[key] = '0'
                 input_value = columns[j].text_input(
-                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
+                    f"{channel} - Week {week+1}", value="0", key=key
                 )
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
