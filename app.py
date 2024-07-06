@@ -26,11 +26,11 @@ def response_transform(saturated, coeff):
 
 # Main function
 def main():
-    st.title("Tool Name Here")
+    st.title("Marketing Mix Model")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
-    uploaded_file = st.sidebar.file_uploader("Upload the excel file here", type=["xlsx"])
+    uploaded_file = st.sidebar.file_uploader("Upload Coefficients Excel", type=["xlsx"])
 
     if uploaded_file:
         coeffs_df = load_coefficients(uploaded_file)
@@ -109,7 +109,7 @@ def main():
             results_df['Total'] = results_df.sum(axis=1)
 
         if not results_df.empty:
-            st.dataframe(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
+            st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
         # Clear inputs button
         if st.button("Clear"):
