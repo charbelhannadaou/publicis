@@ -24,6 +24,11 @@ def saturation_transform(adstocked, alpha, gamma):
 def response_transform(saturated, coeff):
     return coeff * saturated
 
+# Function to clear the input fields
+def clear_inputs(keys):
+    for key in keys:
+        st.session_state[key] = ""
+
 # Main function
 def main():
     st.title("Marketing Mix Model")
@@ -56,7 +61,7 @@ def main():
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
                 input_value = columns[j].text_input(
-                    f"{channel} - Week {week+1}", value="0", key=key
+                    f"{channel} - Week {week+1}", value=st.session_state.get(key, "0"), key=key
                 )
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
@@ -111,8 +116,7 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            for key in inputs.keys():
-                st.session_state[key] = "0"
+            clear_inputs(inputs.keys())
             st.experimental_rerun()
 
 # Run the app
