@@ -113,8 +113,6 @@ def main():
 
         # Clear inputs button
         if st.button("Clear"):
-            for key in inputs.keys():
-                st.session_state[key] = "0"
             st.experimental_rerun()
 
 # Run the app
