@@ -77,6 +77,8 @@ def main():
                 response = response_transform(saturated, betas[channel])
                 results[channel] = response
 
+            total_responses = np.sum([response for response in results.values()], axis=0)
+
             # Create a stacked bar chart
             for channel, response in results.items():
                 fig.add_trace(go.Bar(
@@ -92,6 +94,14 @@ def main():
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
+            fig.add_trace(go.Scatter(
+                x=[f"Week {i+1}" for i in range(num_weeks)],
+                y=total_responses,
+                mode='lines+markers',
+                name='Total',
+                hovertemplate='Total: %{y:,.0f}'
+            ))
+
             st.plotly_chart(fig, use_container_width=True)
 
             # Display the results in a tabular format
@@ -99,7 +109,7 @@ def main():
             results_df['Total'] = results_df.sum(axis=1)
 
         if not results_df.empty:
-            st.dataframe(results_df.style.format("{:.0f}").set_properties(**{'text-align': 'center'}))
+            st.dataframe(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
         # Clear inputs button
         if st.button("Clear"):
