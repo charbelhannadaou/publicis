@@ -83,8 +83,11 @@ def main():
             total_response_value = total_responses.sum()
 
             st.subheader("Summary")
-            st.write(f"**Media Spend:** ${total_media_spend:,.2f}")
-            st.write(f"**Total Response:** ${total_response_value:,.2f}")
+            summary_df = pd.DataFrame({
+                "Media Spend": [f"{total_media_spend:,.2f}"],
+                "Total Response": [f"{total_response_value:,.2f}"]
+            })
+            st.table(summary_df)
 
             # Create a stacked bar chart
             for channel, response in results.items():
