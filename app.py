@@ -26,11 +26,11 @@ def response_transform(saturated, coeff):
 
 # Main function
 def main():
-    st.title("Marketing Mix Model")
+    st.title("Tool Title Here")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
-    uploaded_file = st.sidebar.file_uploader("Upload Coefficients Excel", type=["xlsx"])
+    uploaded_file = st.sidebar.file_uploader("Upload Your Excel Here", type=["xlsx"])
 
     if uploaded_file:
         coeffs_df = load_coefficients(uploaded_file)
