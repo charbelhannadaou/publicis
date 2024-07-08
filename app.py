@@ -68,6 +68,8 @@ def main():
         fig = go.Figure()
         results_df = pd.DataFrame()
 
+        total_media_spend = spends_df.values.sum()
+
         if st.button("Calculate"):
             results = {}
             for channel in spends_df.columns:
@@ -78,6 +80,11 @@ def main():
                 results[channel] = response
 
             total_responses = np.sum([response for response in results.values()], axis=0)
+            total_response_value = total_responses.sum()
+
+            st.subheader("Summary")
+            st.write(f"**Media Spend:** ${total_media_spend:,.2f}")
+            st.write(f"**Total Response:** ${total_response_value:,.2f}")
 
             # Create a stacked bar chart
             for channel, response in results.items():
@@ -114,7 +121,8 @@ def main():
         # Clear inputs button
         if st.button("Clear"):
             for key in st.session_state.keys():
-                st.session_state[key] = "0"
+                if key != 'inputs_initialized':
+                    st.session_state[key] = "0"
             st.experimental_rerun()
 
 # Run the app
