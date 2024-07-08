@@ -63,8 +63,7 @@ def main():
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
-        # Display the visualization area at the top
-        st.header("Results")
+        # Calculate results
         fig = go.Figure()
         results_df = pd.DataFrame()
 
@@ -82,11 +81,12 @@ def main():
             total_responses = np.sum([response for response in results.values()], axis=0)
             total_response_value = total_responses.sum()
 
-            st.subheader("Summary")
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
                 "Total Response": [f"{total_response_value:,.2f}"]
             })
+            summary_df.index = ['']
+
             st.table(summary_df)
 
             # Create a stacked bar chart
