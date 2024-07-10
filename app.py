@@ -116,7 +116,7 @@ def main():
 
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
-                y=total_responses + weekly_base_response,
+                y=total_responses + (weekly_base_response * num_weeks),
                 mode='lines+markers',
                 name='Total',
                 hovertemplate='Total: %{y:,.0f}'
@@ -126,8 +126,8 @@ def main():
 
             # Display the results in a tabular format
             results_df = pd.DataFrame(results)
-            results_df['Weekly Base Response'] = weekly_base_response
-            results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
+            results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
+            results_df['Total'] = results_df.sum(axis=1)
 
         if not results_df.empty:
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
