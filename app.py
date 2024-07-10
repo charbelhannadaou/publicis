@@ -43,6 +43,7 @@ def main():
         # Inputs section
         st.header("Input Data")
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
@@ -79,7 +80,7 @@ def main():
                 results[channel] = response
 
             total_responses = np.sum([response for response in results.values()], axis=0)
-            total_response_value = total_responses.sum()
+            total_response_value = total_responses.sum() + (weekly_base_response * num_weeks)
 
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
@@ -89,6 +90,7 @@ def main():
 
             st.table(summary_df)
 
+            st.header("Results")
             # Create a stacked bar chart
             for channel, response in results.items():
                 fig.add_trace(go.Bar(
@@ -98,6 +100,15 @@ def main():
                     hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
                 ))
 
+            # Add the weekly base response as a constant value bar
+            fig.add_trace(go.Bar(
+                x=[f"Week {i+1}" for i in range(num_weeks)],
+                y=[weekly_base_response] * num_weeks,
+                name="Weekly Base Response",
+                hovertemplate='%{y:,.0f}',  # Display full numbers with commas in the tooltip
+                marker_color='rgba(255, 165, 0, 0.6)'  # Orange color for visibility
+            ))
+
             fig.update_layout(
                 barmode='stack',
                 xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
@@ -106,7 +117,7 @@ def main():
 
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
-                y=total_responses,
+                y=total_responses + weekly_base_response,
                 mode='lines+markers',
                 name='Total',
                 hovertemplate='Total: %{y:,.0f}'
@@ -116,7 +127,8 @@ def main():
 
             # Display the results in a tabular format
             results_df = pd.DataFrame(results)
-            results_df['Total'] = results_df.sum(axis=1)
+            results_df['Weekly Base Response'] = weekly_base_response
+            results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
 
         if not results_df.empty:
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
