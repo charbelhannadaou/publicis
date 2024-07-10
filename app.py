@@ -114,9 +114,10 @@ def main():
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
+            total_response_in_graph = total_responses + weekly_base_response
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
-                y=total_responses + (weekly_base_response * num_weeks),
+                y=total_response_in_graph,
                 mode='lines+markers',
                 name='Total',
                 hovertemplate='Total: %{y:,.0f}'
