@@ -80,11 +80,15 @@ def main():
                 results[channel] = response
 
             total_responses = np.sum([response for response in results.values()], axis=0)
-            total_response_value = total_responses.sum() + (weekly_base_response * num_weeks)
+            media_response = total_responses.sum()
+            total_response_value = media_response + (weekly_base_response * num_weeks)
+            media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
-                "Total Response": [f"{total_response_value:,.2f}"]
+                "Total Response": [f"{total_response_value:,.2f}"],
+                "Media Response": [f"{media_response:,.2f}"],
+                "Media Contribution (%)": [f"{media_contribution:.2f}"]
             })
             summary_df.index = ['']
 
@@ -128,7 +132,7 @@ def main():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results)
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1)
+            results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
 
         if not results_df.empty:
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
