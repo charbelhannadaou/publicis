@@ -92,15 +92,6 @@ def main():
 
             st.header("Results")
             # Create a stacked bar chart
-            for channel, response in results.items():
-                fig.add_trace(go.Bar(
-                    x=[f"Week {i+1}" for i in range(num_weeks)],
-                    y=response,
-                    name=channel,
-                    hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
-                ))
-
-            # Add the weekly base response as a constant value bar
             fig.add_trace(go.Bar(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
                 y=[weekly_base_response] * num_weeks,
@@ -108,6 +99,14 @@ def main():
                 hovertemplate='%{y:,.0f}',  # Display full numbers with commas in the tooltip
                 marker_color='rgba(255, 165, 0, 0.6)'  # Orange color for visibility
             ))
+
+            for channel, response in results.items():
+                fig.add_trace(go.Bar(
+                    x=[f"Week {i+1}" for i in range(num_weeks)],
+                    y=response,
+                    name=channel,
+                    hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
+                ))
 
             fig.update_layout(
                 barmode='stack',
