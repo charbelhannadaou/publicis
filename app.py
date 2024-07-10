@@ -89,7 +89,7 @@ def main():
                 "Total Response": [f"{total_response_value:,.2f}"],
                 "Media Response": [f"{media_response:,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
-            })
+            }).set_index("Media Spend")
 
             st.table(summary_df)
 
