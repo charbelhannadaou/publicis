@@ -90,7 +90,6 @@ def main():
                 "Media Response": [f"{media_response:,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
             })
-            summary_df.index = ['']
 
             st.table(summary_df)
 
