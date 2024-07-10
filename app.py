@@ -89,8 +89,8 @@ def main():
                 "Total Response": [f"{total_response_value:,.2f}"],
                 "Media Response": [f"{media_response:,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
-            }).set_index("Media Spend")
-
+            })
+            summary_df.index = [""]  # Ensure the index column is empty
             st.table(summary_df)
 
             st.header("Results")
