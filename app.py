@@ -61,8 +61,9 @@ def main():
                 st.session_state[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
-        # Calculate button
+        # Display Calculate and Clear buttons
         calculate_button = st.button("Calculate")
+        clear_button = st.button("Clear")
 
         # Calculate and display results
         if calculate_button:
@@ -129,8 +130,7 @@ def main():
 
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
-        # Clear button
-        clear_button = st.button("Clear")
+        # Clear button functionality
         if clear_button:
             for key in st.session_state.keys():
                 if "week" in key:
