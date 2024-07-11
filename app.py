@@ -85,7 +85,7 @@ def main():
                 "Metric": ["Media Spend", "Total Response", "Media Response", "Media Contribution (%)"],
                 "Value": [spends_df.values.sum(), total_response_value, media_response, media_contribution]
             }).set_index("Metric")
-            st.table(summary_df.style.format("{:,.2f}"))
+            st.table(summary_df.T)
 
             # Create a stacked bar chart
             fig = go.Figure()
@@ -134,6 +134,9 @@ def main():
         # Clear button
         clear_button = st.button("Clear")
         if clear_button:
+            for key in st.session_state.keys():
+                if "week" in key:
+                    st.session_state[key] = "0"
             st.experimental_rerun()
 
 # Run the app
