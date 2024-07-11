@@ -47,24 +47,11 @@ def main():
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-        # Grid layout for inputs
-        st.write(" ")
-        columns = st.columns(len(channels))
-        inputs = {}
-        for j, channel in enumerate(channels):
-            columns[j].write(channel)
-            for week in range(num_weeks):
-                key = f"{channel}_week_{week}"
-                if key not in st.session_state:
-                    st.session_state[key] = "0"
-                input_value = columns[j].text_input(
-                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
-                )
-                inputs[key] = input_value
-                spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+        # Calculate button
+        calculate_button = st.button("Calculate")
 
-        # Calculate results button
-        if st.button("Calculate"):
+        # Calculate and display results
+        if calculate_button:
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
@@ -128,12 +115,29 @@ def main():
 
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
-        # Clear inputs button
-        if st.button("Clear"):
+        # Clear button
+        clear_button = st.button("Clear")
+        if clear_button:
             for key in st.session_state.keys():
                 if key != 'inputs_initialized':
                     st.session_state[key] = "0"
             st.experimental_rerun()
+
+        # Grid layout for inputs
+        st.write(" ")
+        columns = st.columns(len(channels))
+        inputs = {}
+        for j, channel in enumerate(channels):
+            columns[j].write(channel)
+            for week in range(num_weeks):
+                key = f"{channel}_week_{week}"
+                if key not in st.session_state:
+                    st.session_state[key] = "0"
+                input_value = columns[j].text_input(
+                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
+                )
+                inputs[key] = input_value
+                spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
 # Run the app
 if __name__ == "__main__":
