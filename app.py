@@ -115,13 +115,6 @@ def main():
 
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
-        # Clear inputs button
-        if st.button("Clear"):
-            for key in st.session_state.keys():
-                if key != 'inputs_initialized':
-                    st.session_state[key] = "0"
-            st.experimental_rerun()
-
         # Grid layout for inputs
         st.write(" ")
         columns = st.columns(len(channels))
@@ -137,6 +130,13 @@ def main():
                 )
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+
+        # Clear inputs button
+        if st.button("Clear"):
+            for key in st.session_state.keys():
+                if key != 'inputs_initialized':
+                    st.session_state[key] = "0"
+            st.experimental_rerun()
 
 # Run the app
 if __name__ == "__main__":
