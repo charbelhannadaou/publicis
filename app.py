@@ -59,8 +59,9 @@ def main():
         for i, group_label in enumerate(group_labels):
             start_week = i * weeks_per_group
             end_week = min((i + 1) * weeks_per_group, num_weeks)
-            if st.session_state.expanded_group == group_label:
-                with st.expander(group_label, expanded=True):
+            expanded = st.session_state.expanded_group == group_label
+            with st.expander(group_label, expanded=expanded):
+                if expanded:
                     columns = st.columns(len(channels))
                     for j, channel in enumerate(channels):
                         columns[j].write(channel)
@@ -73,12 +74,6 @@ def main():
                             )
                             spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
                     st.session_state.expanded_group = group_label
-            else:
-                with st.expander(group_label, expanded=False):
-                    st.write("This group is collapsed. Select it from the radio button above to expand.")
-                    if st.button(f"Expand {group_label}"):
-                        st.session_state.expanded_group = group_label
-                        st.experimental_rerun()
 
         # Calculate results
         fig = go.Figure()
