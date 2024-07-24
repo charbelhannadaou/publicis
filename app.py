@@ -64,9 +64,12 @@ def main():
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
+        # Calculate results
+        fig = go.Figure()
+        results_df = pd.DataFrame()
+
         total_media_spend = spends_df.values.sum()
 
-        # Calculate results
         if st.button("Calculate"):
             results = {}
             for channel in spends_df.columns:
@@ -92,7 +95,6 @@ def main():
 
             st.header("Results")
             # Create a stacked bar chart
-            fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
                 y=[weekly_base_response] * num_weeks,
@@ -130,9 +132,9 @@ def main():
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
             results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
-            results_df.index.name = "Week"
-            results_df = results_df.reset_index()
-            st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
+
+            if not results_df.empty:
+                st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
 # Run the app
 if __name__ == "__main__":
