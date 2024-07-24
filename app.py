@@ -51,22 +51,29 @@ def main():
         # Group weeks into sections of 10 weeks each
         weeks_per_group = 10
         num_groups = (num_weeks - 1) // weeks_per_group + 1
+        group_labels = [f"Weeks {i*weeks_per_group+1} to {min((i+1)*weeks_per_group, num_weeks)}" for i in range(num_groups)]
 
-        for i in range(num_groups):
+        active_group = st.radio("Select Weeks Group to Expand", group_labels, index=0)
+
+        for i, group_label in enumerate(group_labels):
             start_week = i * weeks_per_group
             end_week = min((i + 1) * weeks_per_group, num_weeks)
-            with st.expander(f"Weeks {start_week+1} to {end_week}"):
-                columns = st.columns(len(channels))
-                for j, channel in enumerate(channels):
-                    columns[j].write(channel)
-                    for week in range(start_week, end_week):
-                        key = f"{channel}_week_{week}"
-                        if key not in st.session_state:
-                            st.session_state[key] = "0"
-                        input_value = columns[j].text_input(
-                            f"{channel} - Week {week+1}", value=st.session_state[key], key=key
-                        )
-                        spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+            if group_label == active_group:
+                with st.expander(group_label, expanded=True):
+                    columns = st.columns(len(channels))
+                    for j, channel in enumerate(channels):
+                        columns[j].write(channel)
+                        for week in range(start_week, end_week):
+                            key = f"{channel}_week_{week}"
+                            if key not in st.session_state:
+                                st.session_state[key] = "0"
+                            input_value = columns[j].text_input(
+                                f"{channel} - Week {week+1}", value=st.session_state[key], key=key
+                            )
+                            spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+            else:
+                with st.expander(group_label, expanded=False):
+                    st.write("This group is collapsed. Select it from the radio button above to expand.")
 
         # Calculate results
         fig = go.Figure()
