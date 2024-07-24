@@ -136,8 +136,7 @@ def main():
 
         # Clean button to reset the inputs and outputs
         if st.button("Clean"):
-            for key in st.session_state.keys():
-                st.session_state[key] = "0"
+            st.session_state.clear()
             st.experimental_rerun()
 
 # Run the app
