@@ -134,8 +134,8 @@ def main():
 
         # Clean button
         if st.button("Clean"):
-            for key in st.session_state.keys():
-                st.session_state[key] = "0"
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
             st.experimental_rerun()
 
 # Run the app
