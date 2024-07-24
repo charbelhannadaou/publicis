@@ -64,6 +64,8 @@ def main():
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
+        total_media_spend = spends_df.values.sum()
+
         # Calculate results
         if st.button("Calculate"):
             results = {}
