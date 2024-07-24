@@ -41,14 +41,17 @@ def main():
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
         # Inputs section
+        st.header("Input Data")
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
-        # Grid layout for inputs
-        columns = st.columns(len(channels))
-        inputs = {}
+        # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
+        # Grid layout for inputs
+        st.write(" ")
+        columns = st.columns(len(channels))
+        inputs = {}
         for j, channel in enumerate(channels):
             columns[j].write(channel)
             for week in range(num_weeks):
@@ -61,7 +64,12 @@ def main():
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
-        # Calculate results button
+        # Calculate results
+        fig = go.Figure()
+        results_df = pd.DataFrame()
+
+        total_media_spend = spends_df.values.sum()
+
         if st.button("Calculate"):
             results = {}
             for channel in spends_df.columns:
@@ -77,7 +85,7 @@ def main():
             media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
             summary_df = pd.DataFrame({
-                "Media Spend": [f"{spends_df.values.sum():,.2f}"],
+                "Media Spend": [f"{total_media_spend:,.2f}"],
                 "Total Response": [f"{total_response_value:,.2f}"],
                 "Media Response": [f"{media_response:,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
@@ -85,8 +93,8 @@ def main():
             summary_df.index = [""]  # Ensure the index column is empty
             st.table(summary_df)
 
+            st.header("Results")
             # Create a stacked bar chart
-            fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
                 y=[weekly_base_response] * num_weeks,
@@ -124,9 +132,8 @@ def main():
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
             results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
-            results_df.index.name = "Week"
-            results_df = results_df.reset_index()
 
+        if not results_df.empty:
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
         # Clear inputs button
