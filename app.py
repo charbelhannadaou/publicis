@@ -134,10 +134,6 @@ def main():
             results_df = results_df.reset_index()
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
-        # Clear inputs button
-        if st.button("Clear"):
-            st.experimental_rerun()
-
 # Run the app
 if __name__ == "__main__":
     main()
