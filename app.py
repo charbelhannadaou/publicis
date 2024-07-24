@@ -44,6 +44,13 @@ def main():
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
+        # Clear inputs button
+        if st.button("Clear"):
+            for key in st.session_state.keys():
+                if key != 'inputs_initialized':
+                    st.session_state[key] = "0"
+            st.experimental_rerun()
+
         # Grid layout for inputs
         st.write(" ")
         columns = st.columns(len(channels))
@@ -128,14 +135,7 @@ def main():
             results_df.index.name = "Week"
             results_df = results_df.reset_index()
 
-            st.dataframe(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
-
-        # Clear inputs button
-        if st.button("Clear"):
-            for key in st.session_state.keys():
-                if key != 'inputs_initialized':
-                    st.session_state[key] = "0"
-            st.experimental_rerun()
+            st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
 # Run the app
 if __name__ == "__main__":
