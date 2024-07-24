@@ -132,6 +132,8 @@ def main():
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
             results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
+            results_df.index.name = "Week"
+            results_df = results_df.reset_index()
 
         if not results_df.empty:
             st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
