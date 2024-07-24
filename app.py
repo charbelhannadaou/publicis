@@ -132,11 +132,10 @@ def main():
             if not results_df.empty:
                 st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
-        # Clean button
+        # Clean button with JavaScript to refresh the page
         if st.button("Clean"):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
             st.experimental_rerun()
+            st.markdown("""<script>window.location.reload()</script>""", unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
