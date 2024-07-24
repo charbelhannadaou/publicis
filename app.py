@@ -32,6 +32,11 @@ def main():
     st.sidebar.header("Settings")
     uploaded_file = st.sidebar.file_uploader("Upload Your Excel Here", type=["xlsx"])
 
+    # Initialize session state
+    if 'inputs_initialized' not in st.session_state:
+        st.session_state.inputs_initialized = False
+        st.session_state.clear_button_pressed = False
+
     if uploaded_file:
         coeffs_df = load_coefficients(uploaded_file)
         channels = coeffs_df['channel'].tolist()
@@ -135,6 +140,11 @@ def main():
 
             if not results_df.empty:
                 st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
+
+        # Clean inputs button
+        if st.button("Clean"):
+            st.session_state.clear()
+            st.experimental_rerun()
 
 # Run the app
 if __name__ == "__main__":
