@@ -44,8 +44,23 @@ def main():
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
-        # Create an empty dataframe to hold the spends
+        # Grid layout for inputs
+        st.write(" ")
+        columns = st.columns(len(channels))
+        inputs = {}
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
+
+        for j, channel in enumerate(channels):
+            columns[j].write(channel)
+            for week in range(num_weeks):
+                key = f"{channel}_week_{week}"
+                if key not in st.session_state:
+                    st.session_state[key] = "0"
+                input_value = columns[j].text_input(
+                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
+                )
+                inputs[key] = input_value
+                spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
         # Calculate results button
         if st.button("Calculate"):
@@ -113,23 +128,7 @@ def main():
             results_df.index.name = "Week"
             results_df = results_df.reset_index()
 
-            st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
-
-        # Grid layout for inputs
-        st.write(" ")
-        columns = st.columns(len(channels))
-        inputs = {}
-        for j, channel in enumerate(channels):
-            columns[j].write(channel)
-            for week in range(num_weeks):
-                key = f"{channel}_week_{week}"
-                if key not in st.session_state:
-                    st.session_state[key] = "0"
-                input_value = columns[j].text_input(
-                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
-                )
-                inputs[key] = input_value
-                spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+            st.dataframe(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
         # Clear inputs button
         if st.button("Clear"):
