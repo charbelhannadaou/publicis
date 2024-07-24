@@ -42,8 +42,8 @@ def main():
 
         # Inputs section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
-        weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5, key="num_weeks")
+        weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0, key="weekly_base_response")
 
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
@@ -56,11 +56,7 @@ def main():
             columns[j].write(channel)
             for week in range(num_weeks):
                 key = f"{channel}_week_{week}"
-                if key not in st.session_state:
-                    st.session_state[key] = "0"
-                input_value = columns[j].text_input(
-                    f"{channel} - Week {week+1}", value=st.session_state[key], key=key
-                )
+                input_value = columns[j].text_input(f"{channel} - Week {week+1}", value="0", key=key)
                 inputs[key] = input_value
                 spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
@@ -138,6 +134,8 @@ def main():
 
         # Clean button
         if st.button("Clean"):
+            for key in st.session_state.keys():
+                st.session_state[key] = "0"
             st.experimental_rerun()
 
 # Run the app
