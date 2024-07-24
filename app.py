@@ -134,7 +134,6 @@ def main():
 
         # Clean button with JavaScript to refresh the page
         if st.button("Clean"):
-            st.experimental_rerun()
             st.write('<script>location.reload()</script>', unsafe_allow_html=True)
 
 # Run the app
