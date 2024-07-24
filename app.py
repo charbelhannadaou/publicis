@@ -61,6 +61,9 @@ def main():
             end_week = min((i + 1) * weeks_per_group, num_weeks)
             expanded = st.session_state.expanded_group == group_label
             with st.expander(group_label, expanded=expanded):
+                if st.button(f"Expand {group_label}", key=group_label):
+                    st.session_state.expanded_group = group_label
+
                 if expanded:
                     columns = st.columns(len(channels))
                     for j, channel in enumerate(channels):
@@ -73,7 +76,6 @@ def main():
                                 f"{channel} - Week {week+1}", value=st.session_state[key], key=key
                             )
                             spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
-                    st.session_state.expanded_group = group_label
 
         # Calculate results
         fig = go.Figure()
