@@ -93,7 +93,8 @@ def main():
                 extended_spend = {channel: 0 for channel in channels}
                 for channel in channels:
                     extended_spend[channel] = thetas[channel] * spends_df[channel].iloc[-1]
-                    spends_df = spends_df.append(pd.Series(extended_spend, name=f"Week {extended_weeks}"))
+                spends_df = pd.concat([spends_df, pd.DataFrame(extended_spend, index=[f"Week {extended_weeks}"])])
+
                 extended_adstocked = adstock_transform(np.array(list(extended_spend.values())), thetas[channel])
                 extended_saturated = saturation_transform(extended_adstocked, alphas[channel], gammas[channel])
                 extended_response = response_transform(extended_saturated, betas[channel])
