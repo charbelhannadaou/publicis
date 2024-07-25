@@ -52,10 +52,22 @@ def main():
         weeks_per_group = 10
         num_groups = (num_weeks - 1) // weeks_per_group + 1
 
+        if 'expanded_group' not in st.session_state:
+            st.session_state.expanded_group = 0
+
+        # Initialize the inputs dictionary
+        inputs = {}
+
         for i in range(num_groups):
             start_week = i * weeks_per_group
             end_week = min((i + 1) * weeks_per_group, num_weeks)
-            with st.expander(f"Weeks {start_week+1} to {end_week}"):
+            expanded = st.session_state.expanded_group == i
+
+            # Replace buttons with session state management for collapsing and expanding
+            def expand_group(idx=i):
+                st.session_state.expanded_group = idx
+
+            with st.expander(f"Weeks {start_week+1} to {end_week}", expanded=expanded):
                 columns = st.columns(len(channels))
                 for j, channel in enumerate(channels):
                     columns[j].write(channel)
@@ -66,7 +78,10 @@ def main():
                         input_value = columns[j].text_input(
                             f"{channel} - Week {week+1}", value=st.session_state[key], key=key
                         )
+                        inputs[key] = input_value
                         spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+
+            st.button(f"Expand {start_week+1} to {end_week}", on_click=expand_group, args=(i,))
 
         # Calculate results
         fig = go.Figure()
@@ -85,23 +100,38 @@ def main():
 
             total_responses = np.sum([response for response in results.values()], axis=0)
             media_response = total_responses.sum()
-            total_response_value = media_response + (weekly_base_response * num_weeks)
-            media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
+            # Extend the results until the media response hits zero
+            extended_weeks = num_weeks
+            while media_response > 0:
+                extended_weeks += 1
+                extended_spend = np.zeros(len(channels))
+                for channel in channels:
+                    extended_spend[channel] = thetas[channel] * spends_df[channel].iloc[-1]
+                    spends_df = spends_df.append(pd.Series(extended_spend, name=f"Week {extended_weeks}"))
+                extended_adstocked = adstock_transform(extended_spend, thetas[channel])
+                extended_saturated = saturation_transform(extended_adstocked, alphas[channel], gammas[channel])
+                extended_response = response_transform(extended_saturated, betas[channel])
+                media_response = np.sum(extended_response)
+                total_responses = np.append(total_responses, media_response)
+
+            total_response_value = total_responses.sum() + (weekly_base_response * extended_weeks)
+            media_contribution = (total_responses.sum() / total_response_value) * 100 if total_response_value != 0 else 0
+
+            st.header("Results")
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
                 "Total Response": [f"{total_response_value:,.2f}"],
-                "Media Response": [f"{media_response:,.2f}"],
+                "Media Response": [f"{total_responses.sum():,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
             })
             summary_df.index = [""]  # Ensure the index column is empty
             st.table(summary_df)
 
-            st.header("Results")
             # Create a stacked bar chart
             fig.add_trace(go.Bar(
-                x=[f"Week {i+1}" for i in range(num_weeks)],
-                y=[weekly_base_response] * num_weeks,
+                x=[f"Week {i+1}" for i in range(extended_weeks)],
+                y=[weekly_base_response] * extended_weeks,
                 name="Weekly Base Response",
                 hovertemplate='%{y:,.0f}',  # Display full numbers with commas in the tooltip
                 marker_color='rgba(255, 165, 0, 0.6)'  # Orange color for visibility
@@ -109,7 +139,7 @@ def main():
 
             for channel, response in results.items():
                 fig.add_trace(go.Bar(
-                    x=[f"Week {i+1}" for i in range(num_weeks)],
+                    x=[f"Week {i+1}" for i in range(extended_weeks)],
                     y=response,
                     name=channel,
                     hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
@@ -117,13 +147,13 @@ def main():
 
             fig.update_layout(
                 barmode='stack',
-                xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
+                xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(extended_weeks)]},
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
             total_response_in_graph = total_responses + weekly_base_response
             fig.add_trace(go.Scatter(
-                x=[f"Week {i+1}" for i in range(num_weeks)],
+                x=[f"Week {i+1}" for i in range(extended_weeks)],
                 y=total_response_in_graph,
                 mode='lines+markers',
                 name='Total',
@@ -133,8 +163,8 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
             # Display the results in a tabular format
-            results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
-            results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
+            results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(extended_weeks)])
+            results_df['Weekly Base Response'] = [weekly_base_response] * extended_weeks
             results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
 
             if not results_df.empty:
