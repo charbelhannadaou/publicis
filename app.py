@@ -55,6 +55,9 @@ def main():
         if 'expanded_group' not in st.session_state:
             st.session_state.expanded_group = 0
 
+        # Initialize the inputs dictionary
+        inputs = {}
+
         for i in range(num_groups):
             start_week = i * weeks_per_group
             end_week = min((i + 1) * weeks_per_group, num_weeks)
