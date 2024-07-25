@@ -88,27 +88,29 @@ def main():
 
             # Extend the results until the media response hits zero
             extended_weeks = num_weeks
-            while media_response > 0 and extended_weeks < 52:
+            extended_responses = total_responses
+            while media_response > 0:
                 extended_weeks += 1
                 extended_spend = {channel: 0 for channel in channels}
-                for channel in channels:
-                    extended_spend[channel] = thetas[channel] * spends_df[channel].iloc[-1]
                 spends_df = pd.concat([spends_df, pd.DataFrame(extended_spend, index=[f"Week {extended_weeks}"])])
 
-                extended_adstocked = adstock_transform(np.array(list(extended_spend.values())), thetas[channel])
-                extended_saturated = saturation_transform(extended_adstocked, alphas[channel], gammas[channel])
-                extended_response = response_transform(extended_saturated, betas[channel])
-                media_response = np.sum(extended_response)
-                total_responses = np.append(total_responses, media_response)
+                for channel in channels:
+                    adstocked = adstock_transform(spends_df[channel].values.astype(float), thetas[channel])
+                    saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
+                    response = response_transform(saturated, betas[channel])
+                    results[channel] = response
 
-            total_response_value = total_responses.sum() + (weekly_base_response * extended_weeks)
-            media_contribution = (total_responses.sum() / total_response_value) * 100 if total_response_value != 0 else 0
+                extended_responses = np.sum([response for response in results.values()], axis=0)
+                media_response = extended_responses[-1]
+
+            total_response_value = extended_responses.sum() + (weekly_base_response * extended_weeks)
+            media_contribution = (extended_responses.sum() / total_response_value) * 100 if total_response_value != 0 else 0
 
             st.header("Results")
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
                 "Total Response": [f"{total_response_value:,.2f}"],
-                "Media Response": [f"{total_responses.sum():,.2f}"],
+                "Media Response": [f"{extended_responses.sum():,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
             })
             summary_df.index = [""]  # Ensure the index column is empty
@@ -137,7 +139,7 @@ def main():
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
-            total_response_in_graph = total_responses + weekly_base_response
+            total_response_in_graph = extended_responses + weekly_base_response
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(extended_weeks)],
                 y=total_response_in_graph,
