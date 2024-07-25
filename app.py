@@ -88,7 +88,6 @@ def main():
 
             # Extend the results until the media response hits zero
             extended_weeks = num_weeks
-            extended_responses = total_responses
             while media_response > 0:
                 extended_weeks += 1
                 extended_spend = {channel: 0 for channel in channels}
@@ -100,17 +99,17 @@ def main():
                     response = response_transform(saturated, betas[channel])
                     results[channel] = response
 
-                extended_responses = np.sum([response for response in results.values()], axis=0)
-                media_response = extended_responses[-1]
+                total_responses = np.sum([response for response in results.values()], axis=0)
+                media_response = total_responses[-1]
 
-            total_response_value = extended_responses.sum() + (weekly_base_response * extended_weeks)
-            media_contribution = (extended_responses.sum() / total_response_value) * 100 if total_response_value != 0 else 0
+            total_response_value = total_responses.sum() + (weekly_base_response * extended_weeks)
+            media_contribution = (total_responses.sum() / total_response_value) * 100 if total_response_value != 0 else 0
 
             st.header("Results")
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
                 "Total Response": [f"{total_response_value:,.2f}"],
-                "Media Response": [f"{extended_responses.sum():,.2f}"],
+                "Media Response": [f"{total_responses.sum():,.2f}"],
                 "Media Contribution (%)": [f"{media_contribution:.2f}"]
             })
             summary_df.index = [""]  # Ensure the index column is empty
@@ -139,7 +138,7 @@ def main():
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
-            total_response_in_graph = extended_responses + weekly_base_response
+            total_response_in_graph = total_responses + weekly_base_response
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(extended_weeks)],
                 y=total_response_in_graph,
@@ -153,7 +152,7 @@ def main():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(extended_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * extended_weeks
-            results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
+            results_df['Total'] = results_df.sum(axis=1) + results_df['Weekly Base Response']
 
             if not results_df.empty:
                 st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
