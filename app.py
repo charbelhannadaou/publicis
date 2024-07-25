@@ -88,7 +88,7 @@ def main():
 
             # Extend the results until the media response hits zero
             extended_weeks = num_weeks
-            while media_response > 0:
+            while media_response > 0 and extended_weeks < 52:
                 extended_weeks += 1
                 extended_spend = {channel: 0 for channel in channels}
                 for channel in channels:
