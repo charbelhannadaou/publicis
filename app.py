@@ -89,7 +89,7 @@ def main():
             # Extend the results until the media response hits zero
             extended_weeks = num_weeks
             extended_responses = total_responses
-            while media_response > 0:
+            while media_response > 0 and extended_weeks <= 100:
                 extended_weeks += 1
                 extended_spend = {channel: 0 for channel in channels}
                 spends_df = pd.concat([spends_df, pd.DataFrame(extended_spend, index=[f"Week {extended_weeks}"])])
