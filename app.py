@@ -61,10 +61,8 @@ def main():
             end_week = min((i + 1) * weeks_per_group, num_weeks)
             expanded = st.session_state.expanded_group == group_label
             with st.expander(group_label, expanded=expanded):
-                if st.button(f"Expand {group_label}", key=group_label):
-                    st.session_state.expanded_group = group_label
-
                 if expanded:
+                    st.session_state.expanded_group = group_label
                     columns = st.columns(len(channels))
                     for j, channel in enumerate(channels):
                         columns[j].write(channel)
@@ -152,4 +150,3 @@ def main():
 # Run the app
 if __name__ == "__main__":
     main()
-    
