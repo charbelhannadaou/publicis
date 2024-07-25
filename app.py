@@ -138,7 +138,7 @@ def main():
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
-            total_response_in_graph = total_responses + weekly_base_response
+            total_response_in_graph = total_responses + [weekly_base_response] * extended_weeks
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(extended_weeks)],
                 y=total_response_in_graph,
