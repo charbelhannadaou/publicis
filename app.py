@@ -52,22 +52,10 @@ def main():
         weeks_per_group = 10
         num_groups = (num_weeks - 1) // weeks_per_group + 1
 
-        if 'expanded_group' not in st.session_state:
-            st.session_state.expanded_group = 0
-
-        # Initialize the inputs dictionary
-        inputs = {}
-
         for i in range(num_groups):
             start_week = i * weeks_per_group
             end_week = min((i + 1) * weeks_per_group, num_weeks)
-            expanded = st.session_state.expanded_group == i
-
-            # Replace buttons with session state management for collapsing and expanding
-            def expand_group(idx=i):
-                st.session_state.expanded_group = idx
-
-            with st.expander(f"Weeks {start_week+1} to {end_week}", expanded=expanded):
+            with st.expander(f"Weeks {start_week+1} to {end_week}"):
                 columns = st.columns(len(channels))
                 for j, channel in enumerate(channels):
                     columns[j].write(channel)
@@ -78,10 +66,7 @@ def main():
                         input_value = columns[j].text_input(
                             f"{channel} - Week {week+1}", value=st.session_state[key], key=key
                         )
-                        inputs[key] = input_value
                         spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
-
-            st.button(f"Expand {start_week+1} to {end_week}", on_click=expand_group, args=(i,))
 
         # Calculate results
         fig = go.Figure()
@@ -105,11 +90,11 @@ def main():
             extended_weeks = num_weeks
             while media_response > 0:
                 extended_weeks += 1
-                extended_spend = np.zeros(len(channels))
+                extended_spend = {channel: 0 for channel in channels}
                 for channel in channels:
                     extended_spend[channel] = thetas[channel] * spends_df[channel].iloc[-1]
                     spends_df = spends_df.append(pd.Series(extended_spend, name=f"Week {extended_weeks}"))
-                extended_adstocked = adstock_transform(extended_spend, thetas[channel])
+                extended_adstocked = adstock_transform(np.array(list(extended_spend.values())), thetas[channel])
                 extended_saturated = saturation_transform(extended_adstocked, alphas[channel], gammas[channel])
                 extended_response = response_transform(extended_saturated, betas[channel])
                 media_response = np.sum(extended_response)
