@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+from io import BytesIO
 
 # Function to load coefficients from an Excel file
 def load_coefficients(file):
@@ -24,6 +25,20 @@ def saturation_transform(adstocked, alpha, gamma):
 def response_transform(saturated, coeff):
     return coeff * saturated
 
+# Function to create an empty template
+def create_template(channels, num_weeks):
+    template_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
+    return template_df
+
+# Function to convert dataframe to excel
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=True, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
+
 # Main function
 def main():
     st.title("Tool Title Here")
@@ -45,28 +60,45 @@ def main():
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
+        # Option to download the template
+        if st.button("Download Input Template"):
+            template_df = create_template(channels, num_weeks)
+            st.download_button(
+                label="Download Excel Template",
+                data=to_excel(template_df),
+                file_name="input_template.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+        # File uploader to upload filled input Excel
+        uploaded_input_file = st.file_uploader("Upload Filled Input Excel", type=["xlsx"])
+
         # Create an empty dataframe to hold the spends
         spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-        # Group weeks into sections of 10 weeks each
-        weeks_per_group = 10
-        num_groups = (num_weeks - 1) // weeks_per_group + 1
+        if uploaded_input_file:
+            spends_df = pd.read_excel(uploaded_input_file, index_col=0)
+            num_weeks = len(spends_df)
+        else:
+            # Group weeks into sections of 10 weeks each
+            weeks_per_group = 10
+            num_groups = (num_weeks - 1) // weeks_per_group + 1
 
-        for i in range(num_groups):
-            start_week = i * weeks_per_group
-            end_week = min((i + 1) * weeks_per_group, num_weeks)
-            with st.expander(f"Weeks {start_week+1} to {end_week}"):
-                columns = st.columns(len(channels))
-                for j, channel in enumerate(channels):
-                    columns[j].write(channel)
-                    for week in range(start_week, end_week):
-                        key = f"{channel}_week_{week}"
-                        if key not in st.session_state:
-                            st.session_state[key] = "0"
-                        input_value = columns[j].text_input(
-                            f"{channel} - Week {week+1}", value=st.session_state[key], key=key
-                        )
-                        spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+            for i in range(num_groups):
+                start_week = i * weeks_per_group
+                end_week = min((i + 1) * weeks_per_group, num_weeks)
+                with st.expander(f"Weeks {start_week+1} to {end_week}"):
+                    columns = st.columns(len(channels))
+                    for j, channel in enumerate(channels):
+                        columns[j].write(channel)
+                        for week in range(start_week, end_week):
+                            key = f"{channel}_week_{week}"
+                            if key not in st.session_state:
+                                st.session_state[key] = "0"
+                            input_value = columns[j].text_input(
+                                f"{channel} - Week {week+1}", value=st.session_state[key], key=key
+                            )
+                            spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
         # Calculate results
         fig = go.Figure()
@@ -135,10 +167,25 @@ def main():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
+            results_df['Total'] = results_df.sum(axis=1) + results_df['Weekly Base Response']
 
             if not results_df.empty:
+                st.markdown(
+                    """
+                    <style>
+                    .dataframe-container {
+                        width: 100%;
+                    }
+                    .dataframe-container table {
+                        width: 100%;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
                 st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
+                st.markdown('</div>', unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
