@@ -59,6 +59,32 @@ def main():
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
+        # Create an empty dataframe to hold the spends
+        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
+
+        # Group weeks into sections of 10 weeks each
+        weeks_per_group = 10
+        num_groups = (num_weeks - 1) // weeks_per_group + 1
+
+        for i in range(num_groups):
+            start_week = i * weeks_per_group
+            end_week = min((i + 1) * weeks_per_group, num_weeks)
+            with st.expander(f"Weeks {start_week+1} to {end_week}"):
+                columns = st.columns(len(channels))
+                for j, channel in enumerate(channels):
+                    columns[j].write(channel)
+                    for week in range(start_week, end_week):
+                        key = f"{channel}_week_{week}"
+                        if key not in st.session_state:
+                            st.session_state[key] = "0"
+                        input_value = columns[j].text_input(
+                            f"{channel} - Week {week+1}", value=st.session_state[key], key=key
+                        )
+                        spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
+
+        # Add "OR" before the Excel template preparation and file uploader
+        st.markdown("**OR**")
+
         # Option to download the template
         if st.button("Prepare Excel Template"):
             template_df = create_template(channels, num_weeks)
@@ -69,38 +95,12 @@ def main():
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-        # Add "OR" before the week groups
-        st.markdown("**OR**")
-
         # File uploader to upload filled input Excel
         uploaded_input_file = st.file_uploader("Upload Filled Input Excel", type=["xlsx"])
-
-        # Create an empty dataframe to hold the spends
-        spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
         if uploaded_input_file:
             spends_df = pd.read_excel(uploaded_input_file, index_col=0)
             num_weeks = len(spends_df)
-        else:
-            # Group weeks into sections of 10 weeks each
-            weeks_per_group = 10
-            num_groups = (num_weeks - 1) // weeks_per_group + 1
-
-            for i in range(num_groups):
-                start_week = i * weeks_per_group
-                end_week = min((i + 1) * weeks_per_group, num_weeks)
-                with st.expander(f"Weeks {start_week+1} to {end_week}"):
-                    columns = st.columns(len(channels))
-                    for j, channel in enumerate(channels):
-                        columns[j].write(channel)
-                        for week in range(start_week, end_week):
-                            key = f"{channel}_week_{week}"
-                            if key not in st.session_state:
-                                st.session_state[key] = "0"
-                            input_value = columns[j].text_input(
-                                f"{channel} - Week {week+1}", value=st.session_state[key], key=key
-                            )
-                            spends_df.at[f"Week {week+1}", channel] = float(input_value) if input_value else 0.0
 
         # Calculate results
         fig = go.Figure()
