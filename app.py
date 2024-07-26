@@ -85,24 +85,7 @@ def main():
 
             total_responses = np.sum([response for response in results.values()], axis=0)
             media_response = total_responses.sum()
-
-            # Extend the results until the media response hits zero
-            extended_weeks = num_weeks
-            while media_response > 0:
-                extended_weeks += 1
-                extended_spend = {channel: 0 for channel in channels}
-                spends_df = pd.concat([spends_df, pd.DataFrame(extended_spend, index=[f"Week {extended_weeks}"])])
-
-                for channel in channels:
-                    adstocked = adstock_transform(spends_df[channel].values.astype(float), thetas[channel])
-                    saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
-                    response = response_transform(saturated, betas[channel])
-                    results[channel] = response
-
-                total_responses = np.sum([response for response in results.values()], axis=0)
-                media_response = total_responses[-1]
-
-            total_response_value = media_response + (weekly_base_response * extended_weeks)
+            total_response_value = media_response + (weekly_base_response * num_weeks)
             media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
             st.header("Results")
@@ -117,8 +100,8 @@ def main():
 
             # Create a stacked bar chart
             fig.add_trace(go.Bar(
-                x=[f"Week {i+1}" for i in range(extended_weeks)],
-                y=[weekly_base_response] * extended_weeks,
+                x=[f"Week {i+1}" for i in range(num_weeks)],
+                y=[weekly_base_response] * num_weeks,
                 name="Weekly Base Response",
                 hovertemplate='%{y:,.0f}',  # Display full numbers with commas in the tooltip
                 marker_color='rgba(255, 165, 0, 0.6)'  # Orange color for visibility
@@ -126,7 +109,7 @@ def main():
 
             for channel, response in results.items():
                 fig.add_trace(go.Bar(
-                    x=[f"Week {i+1}" for i in range(extended_weeks)],
+                    x=[f"Week {i+1}" for i in range(num_weeks)],
                     y=response,
                     name=channel,
                     hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
@@ -134,13 +117,13 @@ def main():
 
             fig.update_layout(
                 barmode='stack',
-                xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(extended_weeks)]},
+                xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
-            total_response_in_graph = total_responses + [weekly_base_response] * extended_weeks
+            total_response_in_graph = total_responses[:num_weeks] + [weekly_base_response] * num_weeks
             fig.add_trace(go.Scatter(
-                x=[f"Week {i+1}" for i in range(extended_weeks)],
+                x=[f"Week {i+1}" for i in range(num_weeks)],
                 y=total_response_in_graph,
                 mode='lines+markers',
                 name='Total',
@@ -150,9 +133,9 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
             # Display the results in a tabular format
-            results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(extended_weeks)])
-            results_df['Weekly Base Response'] = [weekly_base_response] * extended_weeks
-            results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
+            results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
+            results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
+            results_df['Total'] = results_df.sum(axis=1) + results_df['Weekly Base Response']
 
             if not results_df.empty:
                 st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
