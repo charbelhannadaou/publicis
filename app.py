@@ -33,9 +33,8 @@ def create_template(channels, num_weeks):
 # Function to convert dataframe to excel
 def to_excel(df):
     output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, index=True, sheet_name='Sheet1')
-    writer.save()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=True, sheet_name='Sheet1')
     processed_data = output.getvalue()
     return processed_data
 
