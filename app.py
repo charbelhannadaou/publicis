@@ -40,11 +40,11 @@ def to_excel(df):
 
 # Main function
 def main():
-    st.title("Tool Title Here")
+    st.title("Media Response Forecasting Tool")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
-    uploaded_file = st.sidebar.file_uploader("Upload Your Excel Here", type=["xlsx"])
+    uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
 
     if uploaded_file:
         coeffs_df = load_coefficients(uploaded_file)
@@ -108,7 +108,7 @@ def main():
 
         total_media_spend = spends_df.values.sum()
 
-        if st.button("Calculate"):
+        if st.button("Forecast"):
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
