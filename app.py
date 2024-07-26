@@ -60,7 +60,7 @@ def main():
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
         # Option to download the template
-        if st.button("Download Input Template"):
+        if st.button("Prepare Excel Template"):
             template_df = create_template(channels, num_weeks)
             st.download_button(
                 label="Download Excel Template",
@@ -68,6 +68,9 @@ def main():
                 file_name="input_template.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
+        # Add "OR" before the week groups
+        st.markdown("**OR**")
 
         # File uploader to upload filled input Excel
         uploaded_input_file = st.file_uploader("Upload Filled Input Excel", type=["xlsx"])
