@@ -88,7 +88,6 @@ def main():
             total_response_value = media_response + (weekly_base_response * num_weeks)
             media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
-            st.header("Results")
             summary_df = pd.DataFrame({
                 "Media Spend": [f"{total_media_spend:,.2f}"],
                 "Total Response": [f"{total_response_value:,.2f}"],
@@ -98,6 +97,7 @@ def main():
             summary_df.index = [""]  # Ensure the index column is empty
             st.table(summary_df)
 
+            st.header("Results")
             # Create a stacked bar chart
             fig.add_trace(go.Bar(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
@@ -121,7 +121,7 @@ def main():
                 yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
             )
 
-            total_response_in_graph = total_responses[:num_weeks] + [weekly_base_response] * num_weeks
+            total_response_in_graph = total_responses + weekly_base_response
             fig.add_trace(go.Scatter(
                 x=[f"Week {i+1}" for i in range(num_weeks)],
                 y=total_response_in_graph,
@@ -135,7 +135,7 @@ def main():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) + results_df['Weekly Base Response']
+            results_df['Total'] = results_df.sum(axis=1) + weekly_base_response
 
             if not results_df.empty:
                 st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
