@@ -59,7 +59,7 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
     return spends_df
 
-# Function to optimize spending to achieve a target total response and media contribution
+# Function to optimize spending to achieve a target total response by minimizing the media spend
 def optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target):
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
@@ -70,7 +70,7 @@ def optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, bet
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return total_response - np.sum(spendings)
+        return np.abs(total_response - total_response_target)
 
     bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
@@ -99,9 +99,13 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
 
 # Function to display results
 def display_results(spends_df, results, num_weeks, weekly_base_response):
+    # Spending Plan Table
+    st.header("Spending Plan")
+    st.write(spends_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
+
+    # Summary Table
     total_media_spend = spends_df.values.sum()
-    total_responses = np.sum([response for response in results.values()], axis=0)
-    media_response = total_responses.sum()
+    media_response = np.sum([response.sum() for response in results.values()])
     total_response_value = media_response + (weekly_base_response * num_weeks)
     media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
@@ -139,7 +143,7 @@ def display_results(spends_df, results, num_weeks, weekly_base_response):
         yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
     )
 
-    total_response_in_graph = total_responses + [weekly_base_response] * num_weeks
+    total_response_in_graph = [weekly_base_response * (i+1) + np.sum([response[i] for response in results.values()]) for i in range(num_weeks)]
     fig.add_trace(go.Scatter(
         x=[f"Week {i+1}" for i in range(num_weeks)],
         y=total_response_in_graph,
@@ -150,7 +154,7 @@ def display_results(spends_df, results, num_weeks, weekly_base_response):
 
     st.plotly_chart(fig, use_container_width=True)
 
-    # Display the results in a tabular format
+    # Results Dataframe
     results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
     results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
     results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
@@ -172,34 +176,6 @@ def display_results(spends_df, results, num_weeks, weekly_base_response):
         st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
         st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # Display the spending plan in a tabular format
-    st.header("Spending Plan")
-    if not spends_df.empty:
-        st.markdown(
-            """
-            <style>
-            .dataframe-container {
-                width: 100%;
-            }
-            .dataframe-container table {
-                width: 100%;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-        st.write(spends_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Option to download the spending plan
-        st.download_button(
-            label="Download Spending Plan",
-            data=to_excel(spends_df),
-            file_name="spending_plan.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
 
 # Main function for Media Response Forecasting Tool
 def media_response_forecasting_tool():
@@ -343,19 +319,11 @@ def optimization_by_minimum_budget_tool():
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
+        total_response_target = 10000  # Some arbitrary high value
+
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-            # Calculate the maximum possible response
-            max_possible_response = 0
-            for channel in channels:
-                spend = spends_df[channel].values.astype(float)
-                adstocked = adstock_transform(spend, thetas[channel])
-                saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
-                response = response_transform(saturated, betas[channel])
-                max_possible_response += response.sum()
-
-            total_response_target = max_possible_response
             spends_df = optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target)
 
             # Calculate results
