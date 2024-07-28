@@ -59,8 +59,8 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
     return spends_df
 
-# Function to optimize spending to achieve a target total response and media contribution
-def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, media_contribution_target):
+# Function to optimize spending to achieve a target total response by minimizing media spend
+def optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target):
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
         total_response = 0
@@ -70,8 +70,8 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        media_response = total_response * (media_contribution_target / 100)
-        return np.abs(total_response - total_response_target) + np.abs(media_response - media_response_target)
+        media_response = total_response - (weekly_base_response * num_weeks)
+        return np.abs(total_response - total_response_target) + np.sum(spendings)
 
     bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
@@ -98,22 +98,16 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
     return spends_df
 
-# Function to display results
+# Function to display the results
 def display_results(spends_df, results, num_weeks, weekly_base_response):
-    st.header("Results")
-    
-    # Display the spending plan
-    st.subheader("Spending Plan")
-    st.table(spends_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
-    
-    total_media_spend = spends_df.values.sum()
     total_responses = np.sum([response for response in results.values()], axis=0)
     media_response = total_responses.sum()
     total_response_value = media_response + (weekly_base_response * num_weeks)
     media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
 
+    st.header("Results")
     summary_df = pd.DataFrame({
-        "Media Spend": [f"{total_media_spend:,.2f}"],
+        "Media Spend": [f"{spends_df.values.sum():,.2f}"],
         "Total Response": [f"{total_response_value:,.2f}"],
         "Media Response": [f"{media_response:,.2f}"],
         "Media Contribution (%)": [f"{media_contribution:.2f}"]
@@ -145,7 +139,7 @@ def display_results(spends_df, results, num_weeks, weekly_base_response):
         yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
     )
 
-    total_response_in_graph = total_responses + [weekly_base_response] * num_weeks
+    total_response_in_graph = np.sum([response for response in results.values()], axis=0) + weekly_base_response
     fig.add_trace(go.Scatter(
         x=[f"Week {i+1}" for i in range(num_weeks)],
         y=total_response_in_graph,
@@ -159,7 +153,7 @@ def display_results(spends_df, results, num_weeks, weekly_base_response):
     # Display the results in a tabular format
     results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
     results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-    results_df['Total'] = results_df.sum(axis=1)
+    results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
 
     if not results_df.empty:
         st.markdown(
@@ -258,81 +252,12 @@ def media_response_forecasting_tool():
                 response = response_transform(saturated, betas[channel])
                 results[channel] = response
 
-            total_responses = np.sum([response for response in results.values()], axis=0)
-            media_response = total_responses.sum()
-            total_response_value = media_response + (weekly_base_response * num_weeks)
-            media_contribution = (media_response / total_response_value) * 100 if total_response_value != 0 else 0
-
-            st.header("Results")
-            summary_df = pd.DataFrame({
-                "Media Spend": [f"{total_media_spend:,.2f}"],
-                "Total Response": [f"{total_response_value:,.2f}"],
-                "Media Response": [f"{media_response:,.2f}"],
-                "Media Contribution (%)": [f"{media_contribution:.2f}"]
-            })
-            summary_df.index = [""]  # Ensure the index column is empty
-            st.table(summary_df)
-
-            # Create a stacked bar chart
-            fig.add_trace(go.Bar(
-                x=[f"Week {i+1}" for i in range(num_weeks)],
-                y=[weekly_base_response] * num_weeks,
-                name="Weekly Base Response",
-                hovertemplate='%{y:,.0f}',  # Display full numbers with commas in the tooltip
-                marker_color='rgba(255, 165, 0, 0.6)'  # Orange color for visibility
-            ))
-
-            for channel, response in results.items():
-                fig.add_trace(go.Bar(
-                    x=[f"Week {i+1}" for i in range(num_weeks)],
-                    y=response,
-                    name=channel,
-                    hovertemplate='%{y:,.0f}'  # Display full numbers with commas in the tooltip
-                ))
-
-            fig.update_layout(
-                barmode='stack',
-                xaxis={'categoryorder': 'array', 'categoryarray': [f"Week {i+1}" for i in range(num_weeks)]},
-                yaxis=dict(tickformat=",.0f")  # Ensure y-axis shows full numbers with commas
-            )
-
-            total_response_in_graph = total_responses + [weekly_base_response] * num_weeks
-            fig.add_trace(go.Scatter(
-                x=[f"Week {i+1}" for i in range(num_weeks)],
-                y=total_response_in_graph,
-                mode='lines+markers',
-                name='Total',
-                hovertemplate='Total: %{y:,.0f}'
-            ))
-
-            st.plotly_chart(fig, use_container_width=True)
-
-            # Display the results in a tabular format
-            results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
-            results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
-
-            if not results_df.empty:
-                st.markdown(
-                    """
-                    <style>
-                    .dataframe-container {
-                        width: 100%;
-                    }
-                    .dataframe-container table {
-                        width: 100%;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
-                st.markdown('</div>', unsafe_allow_html=True)
+            display_results(spends_df, results, num_weeks, weekly_base_response)
 
 # Main function for Optimization by Budget Tool
 def optimization_by_budget_tool():
     st.title("Optimization by Budget")
+    st.markdown("**Goal: Maximize the total response by efficiently spending the media budget**")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
@@ -354,6 +279,7 @@ def optimization_by_budget_tool():
 
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
+
             spends_df = optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, budget)
 
             # Calculate results
@@ -370,6 +296,7 @@ def optimization_by_budget_tool():
 # Main function for Optimization by Minimum Budget Tool
 def optimization_by_minimum_budget_tool():
     st.title("Optimization by Minimum Budget")
+    st.markdown("**Goal: Maximize the total response by minimizing the media spend**")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
@@ -389,10 +316,19 @@ def optimization_by_minimum_budget_tool():
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
         if st.button("Optimize"):
-            spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
-            total_response_target = st.number_input("Enter Total Response Target", min_value=0.0, value=0.0)
+            total_response_target = None
+            max_response = False
+            while not max_response:
+                spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
+                total_response_target = st.number_input("Enter Total Response Target", min_value=0.0, value=0.0)
+                spends_df = optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target)
+                total_responses = np.sum([response for response in results.values()], axis=0)
+                media_response = total_responses.sum()
+                max_response = media_response >= total_response_target
 
-            spends_df = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, 100)
+                if not max_response:
+                    st.warning("This is the greatest total response that could be achieved in this timeframe and this weekly base response.")
+                    total_response_target = media_response
 
             # Calculate results
             results = {}
@@ -408,6 +344,7 @@ def optimization_by_minimum_budget_tool():
 # Main function for Optimization by Total Response Tool
 def optimization_by_total_response_tool():
     st.title("Optimization by Total Response")
+    st.markdown("**Goal: Achieve the specified Total Response by minimizing the media spend**")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
@@ -430,7 +367,7 @@ def optimization_by_total_response_tool():
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-            spends_df = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, 100)
+            spends_df = optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target)
 
             # Calculate results
             results = {}
@@ -446,6 +383,7 @@ def optimization_by_total_response_tool():
 # Main function for Optimization by Media Response Tool
 def optimization_by_media_response_tool():
     st.title("Optimization by Media Response")
+    st.markdown("**Goal: Achieve the specified Media Response by minimizing the media spend**")
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
@@ -484,7 +422,11 @@ def optimization_by_media_response_tool():
 # Main function to run the Streamlit app
 def main():
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Media Response Forecasting Tool", "Optimization by Budget", "Optimization by Minimum Budget", "Optimization by Total Response", "Optimization by Media Response"])
+    page = st.sidebar.radio("Go to", ["Media Response Forecasting Tool", 
+                                      "Optimization by Budget", 
+                                      "Optimization by Minimum Budget", 
+                                      "Optimization by Total Response", 
+                                      "Optimization by Media Response"])
 
     if page == "Media Response Forecasting Tool":
         media_response_forecasting_tool()
