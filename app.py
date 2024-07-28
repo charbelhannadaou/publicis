@@ -71,7 +71,7 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
         media_response = total_response * (media_contribution_target / 100)
-        return np.abs(total_response - total_response_target) + np.abs(media_response - media_response_target)
+        return np.abs(total_response - total_response_target) + np.abs(media_response - total_response * media_contribution_target / 100)
 
     bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
@@ -229,7 +229,7 @@ def media_response_forecasting_tool():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
+            results_df['Total'] = results_df.sum(axis=1)
 
             if not results_df.empty:
                 st.markdown(
@@ -267,22 +267,22 @@ def optimization_tool():
 
         # Inputs section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
-        weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5, key="num_weeks_opt")
+        weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0, key="base_response_opt")
 
         # Optimization goal selection
         st.header("Optimization Goal")
-        optimization_goal = st.selectbox("Select Optimization Goal", ["Total Budget", "Total Response with Media Contribution", "Media Response"])
+        optimization_goal = st.selectbox("Select Optimization Goal", ["Total Budget", "Total Response with Media Contribution", "Media Response"], key="optimization_goal")
 
         if optimization_goal == "Total Budget":
-            budget = st.number_input("Enter Total Budget", min_value=0.0, value=0.0)
+            budget = st.number_input("Enter Total Budget", min_value=0.0, value=0.0, key="budget")
 
         elif optimization_goal == "Total Response with Media Contribution":
-            total_response_target = st.number_input("Enter Total Response Target", min_value=0.0, value=0.0)
-            media_contribution_target = st.number_input("Enter Media Contribution Target (%)", min_value=0.0, value=0.0)
+            total_response_target = st.number_input("Enter Total Response Target", min_value=0.0, value=0.0, key="total_response_target")
+            media_contribution_target = st.number_input("Enter Media Contribution Target (%)", min_value=0.0, value=0.0, key="media_contribution_target")
 
         elif optimization_goal == "Media Response":
-            media_response_target = st.number_input("Enter Media Response Target", min_value=0.0, value=0.0)
+            media_response_target = st.number_input("Enter Media Response Target", min_value=0.0, value=0.0, key="media_response_target")
 
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
@@ -319,6 +319,10 @@ def optimization_tool():
             })
             summary_df.index = [""]  # Ensure the index column is empty
             st.table(summary_df)
+
+            # Display the spending plan
+            st.subheader("Spending Plan")
+            st.table(spends_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
 
             # Create a stacked bar chart
             fig = go.Figure()
@@ -358,7 +362,7 @@ def optimization_tool():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
+            results_df['Total'] = results_df.sum(axis=1)
 
             if not results_df.empty:
                 st.markdown(
