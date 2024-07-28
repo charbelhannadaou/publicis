@@ -229,7 +229,7 @@ def media_response_forecasting_tool():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) + results_df['Weekly Base Response']
+            results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
 
             if not results_df.empty:
                 st.markdown(
@@ -358,7 +358,7 @@ def optimization_tool():
             # Display the results in a tabular format
             results_df = pd.DataFrame(results, index=[f"Week {i+1}" for i in range(num_weeks)])
             results_df['Weekly Base Response'] = [weekly_base_response] * num_weeks
-            results_df['Total'] = results_df.sum(axis=1) + results_df['Weekly Base Response']
+            results_df['Total'] = results_df.sum(axis=1) - results_df['Weekly Base Response'] + weekly_base_response
 
             if not results_df.empty:
                 st.markdown(
