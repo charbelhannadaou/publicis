@@ -59,7 +59,7 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
     return spends_df
 
-# Function to optimize spending to maximize the difference between total response and media spend
+# Function to optimize spending to achieve maximum response with minimum spend
 def optimize_min_spend_max_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks):
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
@@ -70,8 +70,8 @@ def optimize_min_spend_max_response(spends_df, channels, alphas, gammas, thetas,
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        media_spend = spends_df.values.sum()
-        return -(total_response - media_spend)  # Negative because we want to maximize
+        media_spend = spendings.sum()
+        return -(total_response - media_spend)  # Negative to maximize the difference
 
     bounds = [(0, None) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
@@ -90,9 +90,9 @@ def optimize_response_min_spend(spends_df, channels, alphas, gammas, thetas, bet
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return np.abs(total_response - total_response_target)
+        return np.abs(total_response - total_response_target)  # Minimize the difference to target
 
-    bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
+    bounds = [(0, None) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
@@ -109,9 +109,9 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return np.abs(total_response - media_response_target)
+        return np.abs(total_response - media_response_target)  # Minimize the difference to target
 
-    bounds = [(0, media_response_target) for _ in range(num_weeks * len(channels))]
+    bounds = [(0, None) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
@@ -119,6 +119,12 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
 
 # Function to display results
 def display_results(spends_df, results, num_weeks, weekly_base_response):
+    # Display the spending plan
+    st.header("Spending Plan")
+    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+    st.write(spends_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
+    st.markdown('</div>', unsafe_allow_html=True)
+
     total_media_spend = spends_df.values.sum()
     total_responses = np.sum([response for response in results.values()], axis=0)
     media_response = total_responses.sum()
@@ -192,18 +198,6 @@ def display_results(spends_df, results, num_weeks, weekly_base_response):
         st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
         st.write(results_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # Display the spending plan
-    st.header("Spending Plan")
-    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-    st.write(spends_df.style.format("{:,.2f}").set_properties(**{'text-align': 'center'}))
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.download_button(
-        label="Download Spending Plan as CSV",
-        data=spends_df.to_csv().encode('utf-8'),
-        file_name='spending_plan.csv',
-        mime='text/csv'
-    )
 
 # Main function for Media Response Forecasting Tool
 def media_response_forecasting_tool():
@@ -448,13 +442,7 @@ def optimization_by_media_response_tool():
 # Main function to run the Streamlit app
 def main():
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", [
-        "Media Response Forecasting Tool",
-        "Optimization by Budget",
-        "Optimization by Minimum Budget",
-        "Optimization by Total Response",
-        "Optimization by Media Response"
-    ])
+    page = st.sidebar.radio("Go to", ["Media Response Forecasting Tool", "Optimization by Budget", "Optimization by Minimum Budget", "Optimization by Total Response", "Optimization by Media Response"])
 
     if page == "Media Response Forecasting Tool":
         media_response_forecasting_tool()
