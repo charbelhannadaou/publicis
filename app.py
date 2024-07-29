@@ -91,7 +91,7 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return np.abs(total_response - total_response_target)
+        return np.abs(total_response + (weekly_base_response * num_weeks) - total_response_target)
 
     bounds = [(0, None) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
