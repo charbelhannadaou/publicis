@@ -80,10 +80,9 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
     return spends_df
 
-# Function to optimize spending to achieve a target total response
+# Function to optimize spending to achieve a target total response and media contribution
 def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target):
     media_response_target = total_response_target - (weekly_base_response * num_weeks)
-    
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
         total_response = 0
@@ -93,13 +92,15 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return np.abs(total_response - media_response_target)
+        media_response = total_response
+        return np.abs(total_response + (weekly_base_response * num_weeks) - total_response_target)
 
-    bounds = [(0, media_response_target) for _ in range(num_weeks * len(channels))]
+    bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
-    achieved_response = result.fun + (weekly_base_response * num_weeks)
+
+    achieved_response = spends_df.values.sum() + (weekly_base_response * num_weeks)
     return spends_df, achieved_response
 
 # Function to optimize spending to achieve a target media response
@@ -119,13 +120,15 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
     initial_spend = np.zeros(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
-    return spends_df, result.fun
+
+    achieved_response = spends_df.values.sum()
+    return spends_df, achieved_response
 
 # Function to display results
 def display_results(spends_df, results, num_weeks, weekly_base_response, message=None):
     if message:
         st.warning(message)
-        
+
     st.header("Results")
 
     # Spending Plan Table
@@ -463,6 +466,10 @@ def optimization_by_total_response_tool():
 
             spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target)
 
+            message = None
+            if achieved_response < total_response_target:
+                message = "This total response target is unachievable for this timeframe."
+
             # Calculate results
             results = {}
             for channel in spends_df.columns:
@@ -472,10 +479,6 @@ def optimization_by_total_response_tool():
                 response = response_transform(saturated, betas[channel])
                 results[channel] = response
 
-            message = None
-            if achieved_response < total_response_target:
-                message = "This total response target is unachievable for this timeframe."
-                
             display_results(spends_df, results, num_weeks, weekly_base_response, message)
 
 # Main function for Optimization by Media Response Tool
@@ -507,6 +510,10 @@ def optimization_by_media_response_tool():
 
             spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
+            message = None
+            if achieved_response < media_response_target:
+                message = "This media response target is unachievable for this timeframe."
+
             # Calculate results
             results = {}
             for channel in spends_df.columns:
@@ -516,10 +523,6 @@ def optimization_by_media_response_tool():
                 response = response_transform(saturated, betas[channel])
                 results[channel] = response
 
-            message = None
-            if achieved_response < media_response_target:
-                message = "This media response target is unachievable for this timeframe."
-                
             display_results(spends_df, results, num_weeks, weekly_base_response, message)
 
 # Main function to run the Streamlit app
