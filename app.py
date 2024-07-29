@@ -82,6 +82,8 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
 
 # Function to optimize spending to achieve a target total response
 def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target):
+    media_response_target = total_response_target - (weekly_base_response * num_weeks)
+
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
         total_response = 0
@@ -91,9 +93,9 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return np.abs(total_response + (weekly_base_response * num_weeks) - total_response_target)
+        return np.abs(total_response - media_response_target)
 
-    bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
+    bounds = [(0, media_response_target) for _ in range(num_weeks * len(channels))]
     initial_spend = np.zeros(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
@@ -455,7 +457,8 @@ def optimization_by_total_response_tool():
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-            spends_df = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target)
+            media_response_target = total_response_target - (weekly_base_response * num_weeks)
+            spends_df = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
             # Calculate results
             results = {}
