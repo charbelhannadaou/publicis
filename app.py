@@ -80,9 +80,10 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
     return spends_df
 
-# Function to optimize spending to achieve a target total response and media contribution
+# Function to optimize spending to achieve a target total response
 def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response):
     media_response_target = total_response_target - (weekly_base_response * num_weeks)
+
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
         total_response = 0
@@ -92,10 +93,10 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
             response = response_transform(saturated, betas[channel])
             total_response += response.sum()
-        return np.abs(total_response + (weekly_base_response * num_weeks) - total_response_target)
+        return np.abs(total_response - media_response_target)
 
-    bounds = [(0, total_response_target) for _ in range(num_weeks * len(channels))]
-    initial_spend = np.zeros(num_weeks * len(channels))
+    bounds = [(0.01, None) for _ in range(num_weeks * len(channels))]  # Ensuring non-zero spend
+    initial_spend = np.ones(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
 
@@ -115,8 +116,8 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
             total_response += response.sum()
         return np.abs(total_response - media_response_target)
 
-    bounds = [(0, media_response_target) for _ in range(num_weeks * len(channels))]
-    initial_spend = np.zeros(num_weeks * len(channels))
+    bounds = [(0.01, None) for _ in range(num_weeks * len(channels))]  # Ensuring non-zero spend
+    initial_spend = np.ones(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
 
@@ -465,9 +466,8 @@ def optimization_by_total_response_tool():
 
             spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
-            tolerance = 1e-2  # Set tolerance for comparison
             message = None
-            if achieved_response < total_response_target - tolerance:
+            if achieved_response < total_response_target:
                 message = "This total response target is unachievable for this timeframe."
 
             # Calculate results
@@ -510,9 +510,8 @@ def optimization_by_media_response_tool():
 
             spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
-            tolerance = 1e-2  # Set tolerance for comparison
             message = None
-            if achieved_response < media_response_target - tolerance:
+            if achieved_response < media_response_target:
                 message = "This media response target is unachievable for this timeframe."
 
             # Calculate results
