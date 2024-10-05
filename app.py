@@ -511,7 +511,7 @@ def optimization_by_media_response_tool():
             spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
             message = None
-            tolerance = 1e-6  # Set a tolerance level for comparison
+            tolerance = 1e-12  # Set a tolerance level for comparison
             if abs(achieved_response - total_response_target) > tolerance:
                 message = "This media response target is unachievable for this timeframe."
 
