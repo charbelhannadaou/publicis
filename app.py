@@ -464,15 +464,20 @@ def optimization_by_total_response_tool():
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
+            # Get the optimized spends and achieved response
             spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
-        tolerance = 100
-        message = None
-        if abs(achieved_response - total_response_target) > tolerance:
-            message = "This total response target is unachievable for this timeframe."
+            # Ensure that achieved_response has been assigned
+            message = None
+            tolerance = 1e-6  # Set a small tolerance for comparison
 
+            # Ensure achieved_response is assigned properly before comparison
+            if achieved_response is None:
+                message = "Error: Achieved response could not be calculated."
+            elif abs(achieved_response - total_response_target) > tolerance:
+                message = "This total response target is unachievable for this timeframe."
 
-            # Calculate results
+            # Calculate results and display them
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
@@ -482,6 +487,7 @@ def optimization_by_total_response_tool():
                 results[channel] = response
 
             display_results(spends_df, results, num_weeks, weekly_base_response, message)
+
 
 # Main function for Optimization by Media Response Tool
 def optimization_by_media_response_tool():
@@ -510,16 +516,20 @@ def optimization_by_media_response_tool():
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
+            # Get the optimized spends and achieved response
             spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
-        tolerance = 100
-        message = None
-        if abs(achieved_response - media_response_target) > tolerance:
-            message = "This total response target is unachievable for this timeframe."
+            # Ensure that achieved_response has been assigned
+            message = None
+            tolerance = 1e-6  # Set a small tolerance for comparison
 
+            # Ensure achieved_response is assigned properly before comparison
+            if achieved_response is None:
+                message = "Error: Achieved response could not be calculated."
+            elif abs(achieved_response - media_response_target) > tolerance:
+                message = "This media response target is unachievable for this timeframe."
 
-
-            # Calculate results
+            # Calculate results and display them
             results = {}
             for channel in spends_df.columns:
                 spend = spends_df[channel].values.astype(float)
