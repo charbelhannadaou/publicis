@@ -512,9 +512,8 @@ def optimization_by_media_response_tool():
 
             message = None
             tolerance = 1e-6  # Set a tolerance level for comparison
-
             if abs(achieved_response - total_response_target) > tolerance:
-            message = "This media response target is unachievable for this timeframe."
+                message = "This media response target is unachievable for this timeframe."
 
 
             # Calculate results
