@@ -466,9 +466,11 @@ def optimization_by_total_response_tool():
 
             spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
-            message = None
-            if achieved_response < total_response_target:
-                message = "This total response target is unachievable for this timeframe."
+        tolerance = 100
+        message = None
+        if abs(achieved_response - total_response_target) > tolerance:
+            message = "This total response target is unachievable for this timeframe."
+
 
             # Calculate results
             results = {}
@@ -512,7 +514,7 @@ def optimization_by_media_response_tool():
 
         tolerance = 100
         message = None
-        if abs(achieved_response - total_response_target) > tolerance:
+        if abs(achieved_response - media_response_target) > tolerance:
             message = "This total response target is unachievable for this timeframe."
 
 
