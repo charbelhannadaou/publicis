@@ -473,16 +473,14 @@ def optimization_by_total_response_tool():
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
             # Get the optimized spends and achieved response
-            spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
+            spends_df, media_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
-            # Ensure that achieved_response has been assigned
-            message = None
+            # Calculate the correct achieved response by summing the media response and base response
+            achieved_response = media_response + (weekly_base_response * num_weeks)
+
+            # Check if the target is achieved with some tolerance
             tolerance = 100  # Set a small tolerance for comparison
-
-            # Ensure achieved_response is assigned properly before comparison
-            if achieved_response is None:
-                message = "Error: Achieved response could not be calculated."
-            elif achieved_response < total_response_target - tolerance:
+            if achieved_response < total_response_target - tolerance:
                 message = f"This total response target is unachievable for this timeframe. Achieved response: {int(achieved_response)}."
             else:
                 message = f"Achieved the target response of {int(total_response_target)}."
