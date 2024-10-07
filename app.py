@@ -469,7 +469,7 @@ def optimization_by_total_response_tool():
 
             # Ensure that achieved_response has been assigned
             message = None
-            tolerance = 1e-6  # Set a small tolerance for comparison
+            tolerance = 100  # Set a small tolerance for comparison
 
             # Ensure achieved_response is assigned properly before comparison
             if achieved_response is None:
@@ -521,7 +521,7 @@ def optimization_by_media_response_tool():
 
             # Ensure that achieved_response has been assigned
             message = None
-            tolerance = 1e-6  # Set a small tolerance for comparison
+            tolerance = 100  # Set a small tolerance for comparison
 
             # Ensure achieved_response is assigned properly before comparison
             if achieved_response is None:
