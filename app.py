@@ -82,8 +82,10 @@ def optimize_budget(spends_df, channels, alphas, gammas, thetas, betas, num_week
 
 # Function to optimize spending to achieve a target total response
 def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response):
+    # Calculate the total media response target
     media_response_target = total_response_target - (weekly_base_response * num_weeks)
 
+    # Define the objective function for optimization
     def objective(spendings):
         spends_df.loc[:, channels] = spendings.reshape(num_weeks, len(channels))
         total_response = 0
@@ -95,17 +97,29 @@ def optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_we
             total_response += response.sum()
         return np.abs(total_response - media_response_target)
 
-    bounds = [(0.01, None) for _ in range(num_weeks * len(channels))]  # Ensuring non-zero spend
+    # Define bounds to ensure non-zero spend and start optimization
+    bounds = [(0.01, None) for _ in range(num_weeks * len(channels))]
     initial_spend = np.ones(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
+
+    # Update the spends dataframe with the optimized values
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
 
-    achieved_response = spends_df.values.sum() + (weekly_base_response * num_weeks)
-    
-    # Increased tolerance
-    tolerance = 500  # Larger tolerance to account for precision issues
-    
-    return spends_df, achieved_response
+    # Calculate the actual media response based on optimized spends
+    achieved_media_response = 0
+    for channel in channels:
+        spend = spends_df[channel].values.astype(float)
+        adstocked = adstock_transform(spend, thetas[channel])
+        saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
+        response = response_transform(saturated, betas[channel])
+        achieved_media_response += response.sum()
+
+    # Calculate the total achieved response (including baseline response)
+    achieved_total_response = achieved_media_response + (weekly_base_response * num_weeks)
+
+    return spends_df, achieved_total_response
+
+
 
 # Function to optimize spending to achieve a target media response
 def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target):
@@ -456,6 +470,7 @@ def optimization_by_total_response_tool():
     uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
 
     if uploaded_file:
+        # Load coefficients from the uploaded file
         coeffs_df = load_coefficients(uploaded_file)
         channels = coeffs_df['channel'].tolist()
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
@@ -463,25 +478,23 @@ def optimization_by_total_response_tool():
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
-        # Inputs section
+        # Input section
         st.header("Input Data")
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
         total_response_target = st.number_input("Enter Total Response Target", min_value=0.0, value=0.0)
 
+        # Optimize the spending to achieve the target total response
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-            # Get the optimized spends and achieved response
-            spends_df, media_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
-
-            # Calculate the correct achieved response by summing the media response and base response
-            achieved_response = media_response + (weekly_base_response * num_weeks)
+            # Get the optimized spends and achieved total response
+            spends_df, achieved_total_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
             # Check if the target is achieved with some tolerance
             tolerance = 100  # Set a small tolerance for comparison
-            if achieved_response < total_response_target - tolerance:
-                message = f"This total response target is unachievable for this timeframe. Achieved response: {int(achieved_response)}."
+            if abs(achieved_total_response - total_response_target) > tolerance:
+                message = f"This total response target is unachievable for this timeframe. Achieved response: {int(achieved_total_response)}."
             else:
                 message = f"Achieved the target response of {int(total_response_target)}."
 
