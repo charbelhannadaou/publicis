@@ -496,7 +496,7 @@ def optimization_by_total_response_tool():
             if abs(achieved_total_response - total_response_target) > tolerance:
                 message = f"This total response target is unachievable for this timeframe. Achieved response: {int(achieved_total_response)}."
             else:
-                None
+                message = None
 
             # Calculate results and display them
             results = {}
