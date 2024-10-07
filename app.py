@@ -137,14 +137,20 @@ def optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, 
     bounds = [(0.01, None) for _ in range(num_weeks * len(channels))]  # Ensuring non-zero spend
     initial_spend = np.ones(num_weeks * len(channels))
     result = minimize(objective, initial_spend, bounds=bounds)
+
     spends_df.loc[:, channels] = result.x.reshape(num_weeks, len(channels))
 
-    achieved_response = spends_df.values.sum()
-    
-    # Increased tolerance
-    tolerance = 500  # Larger tolerance to account for precision issues
-    
-    return spends_df, achieved_response
+    # Calculate the total achieved media response
+    achieved_media_response = 0
+    for channel in channels:
+        spend = spends_df[channel].values.astype(float)
+        adstocked = adstock_transform(spend, thetas[channel])
+        saturated = saturation_transform(adstocked, alphas[channel], gammas[channel])
+        response = response_transform(saturated, betas[channel])
+        achieved_media_response += response.sum()
+
+    return spends_df, achieved_media_response
+
 
 # Function to display results
 def display_results(spends_df, results, num_weeks, weekly_base_response, message=None):
@@ -521,6 +527,7 @@ def optimization_by_media_response_tool():
     uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
 
     if uploaded_file:
+        # Load coefficients from the uploaded file
         coeffs_df = load_coefficients(uploaded_file)
         channels = coeffs_df['channel'].tolist()
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
@@ -528,29 +535,25 @@ def optimization_by_media_response_tool():
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
-        # Inputs section
+        # Input section
         st.header("Input Data")
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
         media_response_target = st.number_input("Enter Media Response Target", min_value=0.0, value=0.0)
 
+        # Optimize the spending to achieve the target media response
         if st.button("Optimize"):
             spends_df = pd.DataFrame(0.0, index=[f"Week {i+1}" for i in range(num_weeks)], columns=channels)
 
-            # Get the optimized spends and achieved response
-            spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
+            # Get the optimized spends and achieved media response
+            spends_df, achieved_media_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
-            # Ensure that achieved_response has been assigned
-            message = None
+            # Check if the target is achieved with some tolerance
             tolerance = 100  # Set a small tolerance for comparison
-
-            # Ensure achieved_response is assigned properly before comparison
-            if achieved_response is None:
-                message = "Error: Achieved response could not be calculated."
-            elif achieved_response < media_response_target - tolerance:
-                message = f"This media response target is unachievable for this timeframe. Achieved response: {int(achieved_response)}."
+            if abs(achieved_media_response - media_response_target) > tolerance:
+                message = f"This media response target is unachievable for this timeframe. Achieved response: {int(achieved_media_response)}."
             else:
-                None
+                message = None
 
             # Calculate results and display them
             results = {}
