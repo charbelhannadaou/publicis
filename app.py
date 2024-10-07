@@ -451,6 +451,7 @@ def optimization_by_total_response_tool():
 
     st.markdown("Goal: Achieve the specified Total Response by minimizing the media spend")
 
+    # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
     uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
 
@@ -462,6 +463,7 @@ def optimization_by_total_response_tool():
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
+        # Inputs section
         st.header("Input Data")
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
@@ -473,13 +475,17 @@ def optimization_by_total_response_tool():
             # Get the optimized spends and achieved response
             spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
-            # Set a relative tolerance threshold, e.g., 1% of the total target
-            tolerance = total_response_target * 0.01
-
-            # Determine if the total response target is unachievable within the tolerance range
+            # Ensure that achieved_response has been assigned
             message = None
-            if abs(achieved_response - total_response_target) > tolerance:
-                message = f"This total response target is unachievable for this timeframe. Achieved response: {achieved_response:,.0f}"
+            tolerance = 100  # Set a small tolerance for comparison
+
+            # Ensure achieved_response is assigned properly before comparison
+            if achieved_response is None:
+                message = "Error: Achieved response could not be calculated."
+            elif achieved_response < total_response_target - tolerance:
+                message = f"This total response target is unachievable for this timeframe. Achieved response: {int(achieved_response)}."
+            else:
+                message = f"Achieved the target response of {int(total_response_target)}."
 
             # Calculate results and display them
             results = {}
@@ -499,6 +505,7 @@ def optimization_by_media_response_tool():
 
     st.markdown("Goal: Achieve the specified Media Response by minimizing the media spend")
 
+    # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
     uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
 
@@ -510,6 +517,7 @@ def optimization_by_media_response_tool():
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
         betas = coeffs_df.set_index('channel')['coeff'].to_dict()
 
+        # Inputs section
         st.header("Input Data")
         num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
@@ -521,13 +529,17 @@ def optimization_by_media_response_tool():
             # Get the optimized spends and achieved response
             spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
-            # Set a relative tolerance threshold, e.g., 1% of the media target
-            tolerance = media_response_target * 0.01
-
-            # Determine if the media response target is unachievable within the tolerance range
+            # Ensure that achieved_response has been assigned
             message = None
-            if abs(achieved_response - media_response_target) > tolerance:
-                message = f"This media response target is unachievable for this timeframe. Achieved response: {achieved_response:,.0f}"
+            tolerance = 100  # Set a small tolerance for comparison
+
+            # Ensure achieved_response is assigned properly before comparison
+            if achieved_response is None:
+                message = "Error: Achieved response could not be calculated."
+            elif achieved_response < media_response_target - tolerance:
+                message = f"This media response target is unachievable for this timeframe. Achieved response: {int(achieved_response)}."
+            else:
+                message = f"Achieved the target media response of {int(media_response_target)}."
 
             # Calculate results and display them
             results = {}
