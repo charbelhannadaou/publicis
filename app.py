@@ -472,11 +472,15 @@ def optimization_by_total_response_tool():
 
             spends_df, achieved_response = optimize_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, total_response_target, weekly_base_response)
 
-            tolerance = 500  # Increased tolerance
 
+        # Set a relative tolerance threshold, e.g., 1% of the total target
+        tolerance = total_response_target * 0.01
+
+        if abs(achieved_response - total_response_target) > tolerance:
+            message = f"This total response target is unachievable for this timeframe. Achieved response: {achieved_response:,.0f}"
+        else:
             message = None
-            if abs(achieved_response - total_response_target) > tolerance:
-                message = "This total response target is unachievable for this timeframe."
+
 
             results = {}
             for channel in spends_df.columns:
@@ -516,11 +520,15 @@ def optimization_by_media_response_tool():
 
             spends_df, achieved_response = optimize_media_response(spends_df, channels, alphas, gammas, thetas, betas, num_weeks, media_response_target)
 
-            tolerance = 500  # Increased tolerance
+            # Set a relative tolerance threshold, e.g., 1% of the media target
+            tolerance = media_response_target * 0.01
 
-            message = None
             if abs(achieved_response - media_response_target) > tolerance:
-                message = "This media response target is unachievable for this timeframe."
+            message = f"This media response target is unachievable for this timeframe. Achieved response: {achieved_response:,.0f}"
+            else:
+                message = None
+
+
 
             results = {}
             for channel in spends_df.columns:
