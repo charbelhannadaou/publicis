@@ -241,15 +241,20 @@ def media_response_forecasting_tool():
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
+    template_file_path = "Parameters_Template.xlsx"  # Set path to your GitHub file
 
-    # Step 1: Download Excel template
-    with open(template_file_path, "rb") as file:
-        st.sidebar.download_button(
-            label="Download Parameters Template",
-            data=file,
-            file_name="Parameters_Template.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    # Provide a download link for the template
+    st.sidebar.markdown("### Download Excel Template")
+    try:
+        with open(template_file_path, "rb") as file:
+            st.sidebar.download_button(
+                label="Download Template",
+                data=file,
+                file_name="Parameters_Template.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+    except FileNotFoundError:
+        st.sidebar.error("Template file not found. Please check the file path.")
 
     # Step 2: Upload filled Excel file
     uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
