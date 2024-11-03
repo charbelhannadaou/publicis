@@ -241,6 +241,17 @@ def media_response_forecasting_tool():
 
     # Sidebar for uploading the coefficients Excel file
     st.sidebar.header("Settings")
+
+    # Step 1: Download Excel template
+    with open(template_file_path, "rb") as file:
+        st.sidebar.download_button(
+            label="Download Parameters Template",
+            data=file,
+            file_name="Parameters_Template.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    # Step 2: Upload filled Excel file
     uploaded_file = st.sidebar.file_uploader("Upload Your Parameters Excel Here", type=["xlsx"])
 
     if uploaded_file:
