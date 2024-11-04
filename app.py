@@ -265,7 +265,7 @@ def media_response_forecasting_tool():
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
         gammas = coeffs_df.set_index('channel')['gamma'].to_dict()
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
-        betas = coeffs_df.set_index('channel')['coeff'].to_dict()
+        betas = coeffs_df.set_index('channel')['beta'].to_dict()
 
         # Inputs section
         st.header("Input Data")
