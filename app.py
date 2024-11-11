@@ -23,8 +23,8 @@ def saturation_transform(adstocked, alpha, gamma):
     return 1 / (1 + (gamma / adstocked) ** alpha)
 
 # Function to perform the response transformation
-def response_transform(saturated, coeff):
-    return coeff * saturated
+def response_transform(saturated, beta):
+    return beta * saturated
 
 # Function to create an empty template
 def create_template(channels, num_weeks):
@@ -418,7 +418,7 @@ def optimization_by_budget_tool():
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
         gammas = coeffs_df.set_index('channel')['gamma'].to_dict()
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
-        betas = coeffs_df.set_index('channel')['coeff'].to_dict()
+        betas = coeffs_df.set_index('channel')['beta'].to_dict()
 
         # Inputs section
         st.header("Input Data")
@@ -458,7 +458,7 @@ def optimization_by_minimum_budget_tool():
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
         gammas = coeffs_df.set_index('channel')['gamma'].to_dict()
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
-        betas = coeffs_df.set_index('channel')['coeff'].to_dict()
+        betas = coeffs_df.set_index('channel')['beta'].to_dict()
 
         # Inputs section
         st.header("Input Data")
@@ -498,7 +498,7 @@ def optimization_by_total_response_tool():
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
         gammas = coeffs_df.set_index('channel')['gamma'].to_dict()
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
-        betas = coeffs_df.set_index('channel')['coeff'].to_dict()
+        betas = coeffs_df.set_index('channel')['beta'].to_dict()
 
         # Input section
         st.header("Input Data")
@@ -549,7 +549,7 @@ def optimization_by_media_response_tool():
         alphas = coeffs_df.set_index('channel')['alpha'].to_dict()
         gammas = coeffs_df.set_index('channel')['gamma'].to_dict()
         thetas = coeffs_df.set_index('channel')['theta'].to_dict()
-        betas = coeffs_df.set_index('channel')['coeff'].to_dict()
+        betas = coeffs_df.set_index('channel')['beta'].to_dict()
 
         # Input section
         st.header("Input Data")
