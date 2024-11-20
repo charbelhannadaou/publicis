@@ -269,7 +269,7 @@ def media_response_forecasting_tool():
 
         # Inputs section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=60, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
         # Create an empty dataframe to hold the spends
@@ -422,7 +422,7 @@ def optimization_by_budget_tool():
 
         # Inputs section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=60, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
         budget = st.number_input("Enter Total Budget", min_value=0.0, value=0.0)
 
@@ -462,7 +462,7 @@ def optimization_by_minimum_budget_tool():
 
         # Inputs section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=60, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
 
         if st.button("Optimize"):
@@ -502,7 +502,7 @@ def optimization_by_total_response_tool():
 
         # Input section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=60, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
         total_response_target = st.number_input("Enter Total Response Target", min_value=0.0, value=0.0)
 
@@ -553,7 +553,7 @@ def optimization_by_media_response_tool():
 
         # Input section
         st.header("Input Data")
-        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=5)
+        num_weeks = st.number_input("Number of Weeks", min_value=1, max_value=60, value=5)
         weekly_base_response = st.number_input("Weekly Base Response", min_value=0, value=0)
         media_response_target = st.number_input("Enter Media Response Target", min_value=0.0, value=0.0)
 
